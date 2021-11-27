@@ -1,0 +1,79 @@
+use std::ops;
+use std::ops::{AddAssign, Add};
+
+#[derive(Copy, Clone, Debug, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub struct Point<N> {
+    pub x: N,
+    pub y: N
+}
+
+impl<T> From<(T, T)> for Point<T> where T: Copy {
+    #[inline]
+    #[must_use]
+    fn from(value: (T, T)) -> Self {
+        point(value.0, value.1)
+    }
+}
+
+impl<N: Copy + std::ops::Add<Output = N>> AddAssign for Point<N> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x = self.x + rhs.x;
+        self.y = self.y + rhs.y;
+    }
+}
+
+impl<N: Copy + std::ops::Add<Output = N>> Add for Point<N> {
+    type Output = Point<N>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Point::from((self.x + rhs.x, self.y + rhs.y))
+    }
+}
+
+/// A convenience function for generating `Point`s.
+#[inline]
+pub fn point<N>(x: N, y: N) -> Point<N> {
+    Point { x, y }
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub struct Rect<N> {
+    pub min: Point<N>,
+    pub max: Point<N>
+}
+
+/// A convenience function for generating `Rect`s.
+#[inline]
+pub fn rect<N, P: Into<Point<N>>>(min: P, max: P) -> Rect<N> {
+    Rect { min: min.into(), max: max.into() }
+}
+
+impl<N: ops::Sub<Output = N> + Copy + std::ops::Add<Output = N> + std::cmp::PartialOrd> Rect<N> {
+    pub fn width(&self) -> N {
+        self.max.x - self.min.x
+    }
+
+    pub fn height(&self) -> N {
+        self.max.y - self.min.y
+    }
+
+    pub fn move_to<P: Into<Point<N>>>(&mut self, min: P) {
+        let min = min.into();
+        let delta = point(min.x - self.min.x, min.y - self.min.y);
+        self.min += delta.clone();
+        self.max += delta;
+    }
+
+    pub fn move_by<P: Into<Point<N>>>(&mut self, delta: P) {
+        let delta = delta.into();
+        self.min.x = self.min.x + delta.x;
+        self.max.x = self.max.x + delta.x;
+        self.min.y = self.min.y + delta.y;
+        self.max.y = self.max.y + delta.y;
+    }
+
+    pub fn hit<P: Into<Point<N>>>(&self, point: P) -> bool {
+        let point = point.into();
+        self.min.x <= point.x && self.max.x >= point.x && self.min.y <= point.y && self.max.y >= point.y
+    }
+}
