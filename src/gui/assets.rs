@@ -14,8 +14,8 @@ pub fn get_font(name: &str, style: &str) -> Option<Font> {
 
     FONTS.with(|fonts| {
         if !fonts.borrow().contains_key(&key) {
-            // TODO do something with slashes
-            if let Some(file) = ASSETS.get_file(format!("fonts\\{}-{}.ttf", &key.0, &key.1)) {
+            let separator = std::path::MAIN_SEPARATOR;
+            if let Some(file) = ASSETS.get_file(format!("fonts{}{}-{}.ttf", separator, &key.0, &key.1)) {
                 match Font::new(file.contents()) {
                     Ok(font) => {
                         fonts.borrow_mut().insert(key.clone(), font);
