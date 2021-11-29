@@ -37,7 +37,8 @@ impl<'h> Theme for Classic<'h> {
     }
 
     fn set_clip(&mut self, rect: Rect<i32>) {
-        self.graphics.set_clip(rect.min.x, self.height - rect.max.y, rect.max.x - rect.min.x, rect.max.y - rect.min.y);
+        let rect = Rectangle::from_tuples((rect.min.x, self.height - rect.max.y), (rect.max.x, self.height - rect.min.y));
+        self.graphics.set_clip(Some(rect));
     }
 
     #[allow(unused)]

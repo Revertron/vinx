@@ -1,7 +1,7 @@
 [package]
 name = "vinx"
 version = "0.1.0"
-authors = ["Revertron <revertron@revertron.com>"]
+authors = ["Revertron <vinx@revertron.com>"]
 
 [dependencies]
 quick-xml = "0.22.0"

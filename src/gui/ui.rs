@@ -81,13 +81,10 @@ impl UI {
     }
 
     pub fn paint(&self, theme: &mut dyn Theme) {
-        let rect = rect((0, 0), (self.width as i32, self.height as i32));
-        theme.set_clip(rect);
         theme.clear_screen();
         if let Some(root) = &self.root {
             root.borrow().paint(Point::from((0, 0)), theme);
         }
-        theme.set_clip(rect);
     }
 
     pub fn from_xml(xml: &str, width: u32, height: u32, typeface: Typeface) -> Option<Self> {
