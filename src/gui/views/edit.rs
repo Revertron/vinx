@@ -9,23 +9,18 @@ use gui::themes::{FontStyle, Theme, Typeface, ViewState};
 use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
-use views::ViewTextable;
+use views::{FieldsMain, FieldsTexted};
 
 pub struct Edit {
-    state: RefCell<ViewTextable>
+    state: RefCell<FieldsTexted>
 }
 
 #[allow(dead_code)]
 impl Edit {
     pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Edit {
         Edit {
-            state: RefCell::new(ViewTextable {
-                rect,
-                id: String::new(),
-                state: ViewState::Idle,
-                pressed: false,
-                parent: None,
-                typeface: None,
+            state: RefCell::new(FieldsTexted {
+                main: FieldsMain::with_rect(rect),
                 text: text.to_owned(),
                 text_size,
                 cached_text: None,
@@ -45,7 +40,7 @@ impl Edit {
     }
 
     fn get_typeface(&self, parent_typeface: &Typeface) -> Typeface {
-        match &self.state.borrow().typeface {
+        match &self.state.borrow().main.typeface {
             None => parent_typeface.clone(),
             Some(t) => {
                 if t.font_name.is_empty() {
@@ -60,27 +55,27 @@ impl Edit {
     }
 
     fn set_font(&self, font_name: &str) {
-        let typeface = match self.state.borrow_mut().typeface.take() {
+        let typeface = match self.state.borrow_mut().main.typeface.take() {
             None => Typeface { font_name: font_name.to_owned(), font_style: FontStyle::Regular },
             Some(mut t) => {
                 t.font_name = font_name.to_owned();
                 t
             }
         };
-        self.state.borrow_mut().typeface = Some(typeface);
+        self.state.borrow_mut().main.typeface = Some(typeface);
     }
 
     fn set_font_style(&self, style: &str) {
         let font_style = FontStyle::from(style);
-        let typeface = match self.state.borrow_mut().typeface.take() {
+        let typeface = match self.state.borrow_mut().main.typeface.take() {
             None => Typeface { font_name: String::new(), font_style },
             Some(t) => Typeface { font_name: t.font_name, font_style },
         };
-        self.state.borrow_mut().typeface = Some(typeface)
+        self.state.borrow_mut().main.typeface = Some(typeface)
     }
 
     fn layout_text(&self) {
-        let typeface = self.state.borrow().typeface.clone();
+        let typeface = self.state.borrow().main.typeface.clone();
         if let Some(typeface) = typeface {
             if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
                 let options = TextOptions::new();
@@ -107,11 +102,11 @@ impl View for Edit {
     }
 
     fn set_parent(&self, parent: Option<WeakElement>) {
-        self.state.borrow_mut().parent = parent;
+        self.state.borrow_mut().main.parent = parent;
     }
 
     fn get_parent(&self) -> Option<Element> {
-        match &self.state.borrow().parent {
+        match &self.state.borrow().main.parent {
             None => { None }
             Some(weak) => {
                 match weak.upgrade() {
@@ -128,37 +123,42 @@ impl View for Edit {
         }
 
         let typeface = self.get_typeface(typeface);
-        self.state.borrow_mut().typeface = Some(typeface);
+        self.state.borrow_mut().main.typeface = Some(typeface);
         self.layout_text();
     }
 
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
         let state = self.state.borrow();
-        let mut rect = state.rect;
+        let mut rect = state.main.rect;
         rect.move_by(origin);
+        // Drawing the back and frame
         theme.set_clip(rect);
-        theme.draw_edit_back(rect, state.state);
-        theme.draw_edit_body(rect, state.state);
+        theme.draw_edit_back(rect, state.main.state);
+        theme.draw_edit_body(rect, state.main.state);
+        // Drawing the text
+        let padding = state.main.padding;
+        rect.shrink_by(padding.top, padding.left, padding.right, padding.bottom);
+        theme.set_clip(rect);
         if let Some(text) = &state.cached_text {
-            let y = (self.get_height() as f32 - text.height()) / 2f32;
-            theme.draw_text((rect.min.x as f32 + 8f32).round(), (rect.min.y as f32 + y).round(), text);
+            let y = (self.get_height() as f32 - text.height() - padding.top as f32 - padding.bottom as f32) / 2f32;
+            theme.draw_text((rect.min.x as f32 + padding.left as f32).round(), (rect.min.y as f32 + y).round(), text);
         }
     }
 
     fn get_rect(&self) -> Rect<i32> {
-        self.state.borrow().rect
+        self.state.borrow().main.rect
     }
 
     fn set_rect(&mut self, rect: Rect<i32>) {
-        self.state.borrow_mut().rect = rect;
+        self.state.borrow_mut().main.rect = rect;
     }
 
     fn set_id(&mut self, id: &str) {
-        self.state.borrow_mut().id = id.to_owned();
+        self.state.borrow_mut().main.id = id.to_owned();
     }
 
     fn get_id(&self) -> String {
-        self.state.borrow().id.clone()
+        self.state.borrow().main.id.clone()
     }
 
     fn as_container(&self) -> Option<&dyn Container> {

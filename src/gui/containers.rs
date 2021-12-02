@@ -8,19 +8,19 @@ use gui::themes::Theme;
 use gui::traits::{Element, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
-use gui::views::ViewFields;
+use gui::views::FieldsMain;
 use themes::{FontStyle, Typeface};
 use traits::{Container, View};
 
 pub struct Frame {
-    state: RefCell<ViewFields>,
+    state: RefCell<FieldsMain>,
     views: Vec<Element>,
 }
 
 impl Frame {
     pub fn new(rect: Rect<i32>) -> Frame {
         Frame {
-            state: RefCell::new(ViewFields { rect, id: String::new(), parent: None, typeface: None }),
+            state: RefCell::new(FieldsMain::with_rect(rect)),
             views: Vec::new(),
         }
     }

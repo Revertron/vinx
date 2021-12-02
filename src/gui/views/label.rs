@@ -8,23 +8,18 @@ use gui::themes::{FontStyle, Theme, Typeface, ViewState};
 use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
-use views::ViewTextable;
+use views::{FieldsMain, FieldsTexted};
 
 pub struct Label {
-    state: RefCell<ViewTextable>
+    state: RefCell<FieldsTexted>
 }
 
 #[allow(dead_code)]
 impl Label {
     pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Label {
         Label {
-            state: RefCell::new(ViewTextable {
-                rect,
-                id: String::new(),
-                state: ViewState::Idle,
-                pressed: false,
-                parent: None,
-                typeface: None,
+            state: RefCell::new(FieldsTexted {
+                main: FieldsMain::with_rect(rect),
                 text: text.to_owned(),
                 text_size,
                 cached_text: None,
@@ -41,7 +36,7 @@ impl Label {
     }
 
     fn get_typeface(&self, parent_typeface: &Typeface) -> Typeface {
-        match &self.state.borrow().typeface {
+        match &self.state.borrow().main.typeface {
             None => parent_typeface.clone(),
             Some(t) => {
                 if t.font_name.is_empty() {
@@ -56,23 +51,23 @@ impl Label {
     }
 
     fn set_font(&self, font_name: &str) {
-        let typeface = match self.state.borrow_mut().typeface.take() {
+        let typeface = match self.state.borrow_mut().main.typeface.take() {
             None => Typeface { font_name: font_name.to_owned(), font_style: FontStyle::Regular },
             Some(mut t) => {
                 t.font_name = font_name.to_owned();
                 t
             }
         };
-        self.state.borrow_mut().typeface = Some(typeface);
+        self.state.borrow_mut().main.typeface = Some(typeface);
     }
 
     fn set_font_style(&self, style: &str) {
         let font_style = FontStyle::from(style);
-        let typeface = match self.state.borrow_mut().typeface.take() {
+        let typeface = match self.state.borrow_mut().main.typeface.take() {
             None => Typeface { font_name: String::new(), font_style },
             Some(t) => Typeface { font_name: t.font_name, font_style },
         };
-        self.state.borrow_mut().typeface = Some(typeface)
+        self.state.borrow_mut().main.typeface = Some(typeface)
     }
 }
 
@@ -92,11 +87,11 @@ impl View for Label {
     }
 
     fn set_parent(&self, parent: Option<WeakElement>) {
-        self.state.borrow_mut().parent = parent;
+        self.state.borrow_mut().main.parent = parent;
     }
 
     fn get_parent(&self) -> Option<Element> {
-        match &self.state.borrow().parent {
+        match &self.state.borrow().main.parent {
             None => { None }
             Some(weak) => {
                 match weak.upgrade() {
@@ -123,7 +118,7 @@ impl View for Label {
 
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
         let state = self.state.borrow();
-        let mut rect = state.rect;
+        let mut rect = state.main.rect;
         rect.move_by(origin);
         theme.set_clip(rect);
         if let Some(text) = &self.state.borrow().cached_text {
@@ -134,19 +129,19 @@ impl View for Label {
     }
 
     fn get_rect(&self) -> Rect<i32> {
-        self.state.borrow().rect
+        self.state.borrow().main.rect
     }
 
     fn set_rect(&mut self, rect: Rect<i32>) {
-        self.state.borrow_mut().rect = rect;
+        self.state.borrow_mut().main.rect = rect;
     }
 
     fn set_id(&mut self, id: &str) {
-        self.state.borrow_mut().id = id.to_owned();
+        self.state.borrow_mut().main.id = id.to_owned();
     }
 
     fn get_id(&self) -> String {
-        self.state.borrow().id.clone()
+        self.state.borrow().main.id.clone()
     }
 
     fn as_container(&self) -> Option<&dyn Container> {
