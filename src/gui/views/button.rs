@@ -1,4 +1,6 @@
+use std::borrow::Borrow;
 use std::cell::RefCell;
+use std::cmp::max;
 use std::collections::HashMap;
 
 use speedy2d::dimen::Vector2;
@@ -12,6 +14,8 @@ use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
 use views::{FieldsMain, FieldsTexted};
+
+const BUTTON_MIN_WIDTH: i32 = 64;
 
 pub struct Button {
     state: RefCell<FieldsTexted>
@@ -38,7 +42,8 @@ impl Button {
             state.text.push_str(text);
             state.cached_text = None;
         }
-        self.layout_text();
+        let scale = self.state.borrow().main.scale;
+        self.layout_text(scale);
     }
 
     fn get_typeface(&self, parent_typeface: &Typeface) -> Typeface {
@@ -76,12 +81,13 @@ impl Button {
         self.state.borrow_mut().main.typeface = Some(typeface)
     }
 
-    fn layout_text(&self) {
+    fn layout_text(&self, scale: f64) {
         let typeface = self.state.borrow().main.typeface.clone();
         if let Some(typeface) = typeface {
             if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
                 let options = TextOptions::new();
-                let text = font.layout_text(&self.state.borrow().text, self.state.borrow().text_size, options);
+                let size = self.state.borrow().text_size * scale as f32;
+                let text = font.layout_text(&self.state.borrow().text, size, options);
                 self.state.borrow_mut().cached_text = Some(text);
             }
         }
@@ -119,14 +125,23 @@ impl View for Button {
         }
     }
 
-    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface) {
+    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface, scale: f64) {
         if self.state.borrow().cached_text.is_some() {
             return;
         }
 
         let typeface = self.get_typeface(typeface);
         self.state.borrow_mut().main.typeface = Some(typeface);
-        self.layout_text();
+        self.state.borrow_mut().main.scale = scale;
+        self.layout_text(scale);
+        let mut state = self.state.borrow_mut();
+        let mut rect = state.main.rect;
+        rect.max.x = rect.min.x + match &state.cached_text {
+            None => BUTTON_MIN_WIDTH,
+            Some(text) => max(text.width().round() as i32, (BUTTON_MIN_WIDTH as f64 * scale) as i32)
+        };
+        rect.max.x += ((state.main.padding.left + state.main.padding.right) as f64 * scale).round() as i32;
+        state.main.rect = rect;
     }
 
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
@@ -235,6 +250,6 @@ impl View for Button {
 impl Default for Button {
     fn default() -> Self {
         let rect = rect((0, 0), (60, 24));
-        Button::new(rect, "", 48_f32)
+        Button::new(rect, "", 24_f32)
     }
 }

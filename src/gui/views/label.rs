@@ -102,7 +102,7 @@ impl View for Label {
         }
     }
 
-    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface) {
+    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface, scale: f64) {
         if self.state.borrow().cached_text.is_some() {
             return;
         }

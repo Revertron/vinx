@@ -44,12 +44,12 @@ fn button1_click(ui: &mut UI, view: &dyn View) -> bool {
     // Change something in another view
     if let Some(edit) = ui.get_view("edit1") {
         if let Some(e) = edit.borrow_mut().downcast_mut::<Edit>() {
-            e.set_text("Button clicked!");
+            e.set_text("Text changed from button click!");
         }
     }
     // Change something in clicked view
     if let Some(button) = view.as_any().downcast_ref::<Button>() {
-        button.set_text("Button OK!");
+        button.set_text("Clicked!");
     }
     true
 }

@@ -3,7 +3,7 @@ use speedy2d::font::Font;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-const ASSETS: Dir = include_dir!("assets");
+const ASSETS: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets");
 
 thread_local! {
     static FONTS: RefCell<HashMap<(String, String), Font>> = RefCell::new(HashMap::new());

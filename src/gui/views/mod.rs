@@ -25,6 +25,7 @@ pub struct FieldsTexted {
 pub struct FieldsMain {
     pub rect: Rect<i32>,
     pub padding: Borders,
+    pub scale: f64,
     pub id: String,
     pub state: ViewState,
     pub pressed: bool,
@@ -37,6 +38,7 @@ impl FieldsMain {
         FieldsMain {
             rect,
             padding: Borders::default(),
+            scale: 1.0,
             id: String::new(),
             state: ViewState::Idle,
             pressed: false,

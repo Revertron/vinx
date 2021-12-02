@@ -117,7 +117,7 @@ impl View for Edit {
         }
     }
 
-    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface) {
+    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface, scale: f64) {
         if self.state.borrow().cached_text.is_some() {
             return;
         }

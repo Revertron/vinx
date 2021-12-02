@@ -100,7 +100,7 @@ impl View for Frame {
         }
     }
 
-    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface) {
+    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface, scale: f64) {
         println!("Laying out for size {}x{}", rect.width(), rect.height());
         for v in self.views.iter() {
             let typeface = match self.state.borrow().typeface.clone() {
@@ -108,7 +108,7 @@ impl View for Frame {
                 Some(t) => t
             };
             let mut v = v.try_borrow_mut().unwrap();
-            v.layout(rect, &typeface);
+            v.layout(rect, &typeface, scale);
         }
     }
 

@@ -33,7 +33,7 @@ impl<T> WindowHandler<T> for Win<T> {
         println!("on_start");
         self.width = info.viewport_size_pixels().x;
         self.height = info.viewport_size_pixels().y;
-        self.ui.layout(self.width, self.height);
+        self.ui.layout(self.width, self.height, info.scale_factor());
         helper.request_redraw();
     }
 
@@ -42,7 +42,7 @@ impl<T> WindowHandler<T> for Win<T> {
         if size_pixels.x > 0 && size_pixels.y > 0 {
             self.width = size_pixels.x;
             self.height = size_pixels.y;
-            self.ui.layout(size_pixels.x, size_pixels.y);
+            self.ui.layout(size_pixels.x, size_pixels.y, helper.get_scale_factor());
             helper.request_redraw();
         }
     }

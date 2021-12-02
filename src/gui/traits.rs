@@ -19,7 +19,7 @@ pub trait View: Downcast {
     fn set_parent(&self, parent: Option<WeakElement>);
     fn get_parent(&self) -> Option<Element>;
     #[allow(unused)]
-    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface) {}
+    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface, scale: f64) {}
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme);
     fn get_rect(&self) -> Rect<i32>;
     fn set_rect(&mut self, rect: Rect<i32>);

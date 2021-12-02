@@ -70,13 +70,13 @@ impl UI {
         self.types.get(name).expect("No type!")()
     }
 
-    pub fn layout(&mut self, width: u32, height: u32) {
+    pub fn layout(&mut self, width: u32, height: u32, scale: f64) {
         self.width = width;
         self.height = height;
         let rect = rect((0, 0), (width as i32, height as i32));
         let root = self.root.clone();
         if let Some(root) = root {
-            root.try_borrow_mut().unwrap().layout(&rect, &self.typeface.clone());
+            root.try_borrow_mut().unwrap().layout(&rect, &self.typeface.clone(), scale);
         }
     }
 
