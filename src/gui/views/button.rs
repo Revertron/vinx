@@ -13,9 +13,9 @@ use gui::themes::{FontStyle, Theme, Typeface, ViewState};
 use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
+use gui::views::{Borders, Dimension};
 use views::{FieldsMain, FieldsTexted};
-
-const BUTTON_MIN_WIDTH: i32 = 64;
+use crate::gui::views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH};
 
 pub struct Button {
     state: RefCell<FieldsTexted>
@@ -26,7 +26,7 @@ impl Button {
     pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Button {
         Button {
             state: RefCell::new(FieldsTexted {
-                main: FieldsMain::with_rect(rect),
+                main: FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min),
                 text: text.to_owned(),
                 text_size,
                 cached_text: None,
@@ -43,7 +43,7 @@ impl Button {
             state.cached_text = None;
         }
         let scale = self.state.borrow().main.scale;
-        self.layout_text(scale);
+        self.layout_text(self.get_rect_width(), scale);
     }
 
     fn get_typeface(&self, parent_typeface: &Typeface) -> Typeface {
@@ -81,11 +81,15 @@ impl Button {
         self.state.borrow_mut().main.typeface = Some(typeface)
     }
 
-    fn layout_text(&self, scale: f64) {
+    fn layout_text(&self, max_width: i32, scale: f64) {
+        if max_width <= 0 {
+            self.state.borrow_mut().cached_text = None;
+            return;
+        }
         let typeface = self.state.borrow().main.typeface.clone();
         if let Some(typeface) = typeface {
             if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
-                let options = TextOptions::new();
+                let options = TextOptions::new().with_wrap_to_width(max_width as f32, TextAlignment::Left);
                 let size = self.state.borrow().text_size * scale as f32;
                 let text = font.layout_text(&self.state.borrow().text, size, options);
                 self.state.borrow_mut().cached_text = Some(text);
@@ -125,37 +129,43 @@ impl View for Button {
         }
     }
 
-    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface, scale: f64) {
-        if self.state.borrow().cached_text.is_some() {
-            return;
-        }
-
+    fn layout_content(&mut self, x: i32, y: i32, width: i32, height: i32, typeface: &Typeface, scale: f64) -> Rect<i32> {
+        println!("{} for width {}", self.get_id(), width);
         let typeface = self.get_typeface(typeface);
         self.state.borrow_mut().main.typeface = Some(typeface);
         self.state.borrow_mut().main.scale = scale;
-        self.layout_text(scale);
-        let mut state = self.state.borrow_mut();
-        let mut rect = state.main.rect;
-        rect.max.x = rect.min.x + match &state.cached_text {
-            None => BUTTON_MIN_WIDTH,
-            Some(text) => max(text.width().round() as i32, (BUTTON_MIN_WIDTH as f64 * scale) as i32)
-        };
-        rect.max.x += ((state.main.padding.left + state.main.padding.right) as f64 * scale).round() as i32;
-        state.main.rect = rect;
+        // TODO use padding
+        let (new_width, new_height) = self.calculate_size(width, height, scale);
+        self.layout_text(new_width, scale);
+        let (width, height) = self.calculate_full_size(scale);
+        let rect = rect((x, y), (x + width, y + height));
+        self.set_rect(rect.clone());
+        rect
+    }
+
+    fn fits_in_rect(&self, width: i32, height: i32, scale: f64) -> bool {
+        let state = self.state.borrow();
+        match &state.cached_text {
+            Some(text) => text.width() <= width as f32 && text.height() <= height as f32,
+            None => width <= BUTTON_MIN_WIDTH && height <= BUTTON_MIN_HEIGHT
+        }
     }
 
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
         let state = self.state.borrow();
         let mut rect = state.main.rect;
         rect.move_by(origin);
-        theme.set_clip(rect);
+        theme.push_clip();
+        theme.clip_rect(rect);
         theme.draw_button_back(rect, state.main.state);
         theme.draw_button_body(rect, state.main.state);
+        // TODO use padding
         if let Some(text) = &state.cached_text {
-            let x = (self.get_width() as f32 - text.width()) / 2f32;
-            let y = (self.get_height() as f32 - text.height()) / 2f32;
+            let x = (self.get_rect_width() as f32 - text.width()) / 2f32;
+            let y = (self.get_rect_height() as f32 - text.height()) / 2f32;
             theme.draw_text((rect.min.x as f32 + x).round(), (rect.min.y as f32 + y).round(), text);
         }
+        theme.pop_clip();
     }
 
     fn get_rect(&self) -> Rect<i32> {
@@ -164,6 +174,35 @@ impl View for Button {
 
     fn set_rect(&mut self, rect: Rect<i32>) {
         self.state.borrow_mut().main.rect = rect;
+    }
+
+    fn get_padding(&self, scale: f64) -> Borders {
+        self.state.borrow().main.padding.scaled(scale)
+    }
+
+    fn get_bounds(&self) -> (Dimension, Dimension) {
+        let state = self.state.borrow();
+        (state.main.width, state.main.height)
+    }
+
+    fn get_content_size(&self) -> (i32, i32) {
+        let state = self.state.borrow();
+        match &state.cached_text {
+            None => (BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT),
+            Some(text) => {
+                let width = max(text.width().ceil() as i32, BUTTON_MIN_WIDTH);
+                let height = max(text.height().ceil() as i32, BUTTON_MIN_HEIGHT);
+                (width, height)
+            }
+        }
+    }
+
+    fn set_width(&mut self, width: Dimension) {
+        self.state.borrow_mut().main.width = width;
+    }
+
+    fn set_height(&mut self, height: Dimension) {
+        self.state.borrow_mut().main.height = height;
     }
 
     fn set_id(&mut self, id: &str) {

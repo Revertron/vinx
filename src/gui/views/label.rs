@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::cmp::max;
 use std::collections::HashMap;
 
 use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
@@ -8,7 +9,8 @@ use gui::themes::{FontStyle, Theme, Typeface, ViewState};
 use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
-use views::{FieldsMain, FieldsTexted};
+use gui::views::Dimension;
+use views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, FieldsMain, FieldsTexted};
 
 pub struct Label {
     state: RefCell<FieldsTexted>
@@ -19,7 +21,7 @@ impl Label {
     pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Label {
         Label {
             state: RefCell::new(FieldsTexted {
-                main: FieldsMain::with_rect(rect),
+                main: FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min),
                 text: text.to_owned(),
                 text_size,
                 cached_text: None,
@@ -102,17 +104,31 @@ impl View for Label {
         }
     }
 
-    fn layout(&mut self, rect: &Rect<i32>, typeface: &Typeface, scale: f64) {
+    fn layout_content(&mut self, x: i32, y: i32, width: i32, height: i32, typeface: &Typeface, scale: f64) -> Rect<i32> {
         if self.state.borrow().cached_text.is_some() {
-            return;
+            // TODO check if area changed
+            return self.get_rect();
         }
 
+        self.state.borrow_mut().main.scale = scale;
         let typeface = self.get_typeface(typeface);
         if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
             let options = TextOptions::new()
-                .with_wrap_to_width(self.get_width() as f32, TextAlignment::Left);
+                .with_wrap_to_width(width as f32, TextAlignment::Left);
             let text = font.layout_text(&self.state.borrow().text, self.state.borrow().text_size, options);
             self.state.borrow_mut().cached_text = Some(text);
+        }
+        let (width, height) = self.calculate_full_size(scale);
+        let rect = rect((x, y), (x + width, y + height));
+        self.set_rect(rect.clone());
+        rect
+    }
+
+    fn fits_in_rect(&self, width: i32, height: i32, scale: f64) -> bool {
+        let state = self.state.borrow();
+        match &state.cached_text {
+            Some(text) => text.width() <= width as f32 && text.height() <= height as f32,
+            None => width <= BUTTON_MIN_WIDTH && height <= BUTTON_MIN_HEIGHT
         }
     }
 
@@ -122,8 +138,8 @@ impl View for Label {
         rect.move_by(origin);
         theme.set_clip(rect);
         if let Some(text) = &self.state.borrow().cached_text {
-            let x = (self.get_width() as f32 - text.width()) / 2f32;
-            let y = (self.get_height() as f32 - text.height()) / 2f32;
+            let x = (self.get_rect_width() as f32 - text.width()) / 2f32;
+            let y = (self.get_rect_height() as f32 - text.height()) / 2f32;
             theme.draw_text((rect.min.x as f32 + x).round(), (rect.min.y as f32 + y).round(), text);
         }
     }
@@ -134,6 +150,31 @@ impl View for Label {
 
     fn set_rect(&mut self, rect: Rect<i32>) {
         self.state.borrow_mut().main.rect = rect;
+    }
+
+    fn get_bounds(&self) -> (Dimension, Dimension) {
+        let state = self.state.borrow();
+        (state.main.width, state.main.height)
+    }
+
+    fn get_content_size(&self) -> (i32, i32) {
+        let state = self.state.borrow();
+        match &state.cached_text {
+            None => (BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT),
+            Some(text) => {
+                let width = max(text.width().round() as i32, BUTTON_MIN_WIDTH);
+                let height = max(text.height().round() as i32, BUTTON_MIN_HEIGHT);
+                (width, height)
+            }
+        }
+    }
+
+    fn set_width(&mut self, width: Dimension) {
+        self.state.borrow_mut().main.width = width;
+    }
+
+    fn set_height(&mut self, height: Dimension) {
+        self.state.borrow_mut().main.height = height;
     }
 
     fn set_id(&mut self, id: &str) {

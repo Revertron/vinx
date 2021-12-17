@@ -1,20 +1,22 @@
-<Frame id="main" top="0" left="0" width="1920" height="1080" font="Noto Sans" font_style="Regular">
-    <Label id="label1" top="10" left="100" width="450" height="50" text="Label with NotoSans font"/>
-    <Button id="btn1" top="64" left="100" width="200" height="50" text="Button 1"/>
-    <Button id="btn2" top="118" left="100" width="200" height="50" text="Italic 2" font_style="Italic"/>
-    <Button id="btn3" top="172" left="100" width="200" height="50" text="Button 3"/>
-
-    <Edit id="edit1" top="238" left="100" width="450" height="56" text="Some very very very long text to edit and test clipping"/>
-
-    <Frame id="content" top="64" left="310" width="800" height="300" font="Akkurat">
-        <Button id="btn4" top="0" left="100" width="200" height="50" text="Akkurat 4"/>
-        <Button id="btn5" top="54" left="100" width="200" height="50" text="Bold 5" font_style="Bold"/>
-        <Button id="btn6" top="108" left="100" width="200" height="50" text="Button 6"/>
+<Frame id="main" width="min" height="max" direction="vertical" font="Noto Sans" font_style="Regular">
+    <Label id="label1" text="Label with NotoSans font"/>
+    <Frame id="buttons1" direction="horizontal">
+        <Button id="btn1" text="Button 1"/>
+        <Button id="btn2" text="Italic 2" font_style="Italic" width="300"/>
+        <Button id="btn3" text="Button 3"/>
     </Frame>
 
-    <Frame id="footer" top="310" left="0" width="800" height="300">
-        <Button id="btn7" top="0" left="100" width="200" height="50" text="Tlačidlo 7"/>
-        <Button id="btn8" top="54" left="100" width="200" height="50" text="Кнопка 8"/>
-        <Button id="btn9" top="108" left="100" width="200" height="50" text="Button 9"/>
+    <Edit id="edit1" text="Some very very very long text to edit and test clipping"/>
+
+    <Frame id="content" font="Akkurat" direction="vertical" width="400">
+        <Button id="btn4" text="Akkurat 4" width="max"/>
+        <Button id="btn5" text="Bold 5" font_style="Bold" width="max"/>
+        <Button id="btn6" text="Button 6" width="max"/>
+    </Frame>
+
+    <Frame id="footer" width="30%" height="min">
+        <Button id="btn7" text="Tlačidlo 7"/>
+        <Button id="btn8" text="Кнопка 8"/>
+        <Button id="btn9" text="Last button"/>
     </Frame>
 </Frame>

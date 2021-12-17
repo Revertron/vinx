@@ -6,5 +6,5 @@ authors = ["Revertron <vinx@revertron.com>"]
 [dependencies]
 quick-xml = "0.22.0"
 downcast-rs = "1.2.0"
-speedy2d = { version = "1.1.2", path = "../Speedy2D" }
+speedy2d = { version = "1.2" }
 include_dir = "0.7"

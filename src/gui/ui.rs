@@ -76,7 +76,7 @@ impl UI {
         let rect = rect((0, 0), (width as i32, height as i32));
         let root = self.root.clone();
         if let Some(root) = root {
-            root.try_borrow_mut().unwrap().layout(&rect, &self.typeface.clone(), scale);
+            root.borrow_mut().layout_content(0, 0, width as i32, height as i32, &self.typeface.clone(), scale);
         }
     }
 

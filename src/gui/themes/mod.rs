@@ -9,6 +9,9 @@ pub trait Theme {
     fn clear_screen(&mut self);
     fn typeface() -> Typeface where Self: Sized;
     fn set_clip(&mut self, rect: Rect<i32>);
+    fn clip_rect(&mut self, rect: Rect<i32>) -> Rect<i32>;
+    fn push_clip(&mut self);
+    fn pop_clip(&mut self);
     fn draw_button_back(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_button_body(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_button_text(&mut self, rect: Rect<i32>, state: ViewState, size: usize, text: &str);
