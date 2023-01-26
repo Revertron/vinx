@@ -162,7 +162,7 @@ impl View for Edit {
         theme.push_clip();
         theme.clip_rect(rect);
         if let Some(text) = &state.cached_text {
-            let y = (self.get_rect_height() as f32 - text.height() - padding.top as f32 - padding.bottom as f32) / 2f32;
+            let y = (rect.height() as f32 - text.height()) / 2f32;
             theme.draw_text((rect.min.x as f32).round(), (rect.min.y as f32 + y).round(), text);
         }
         theme.pop_clip();
