@@ -6,6 +6,7 @@ use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
 
 use assets::get_font;
 use events::UiEvent;
+use gui::views::Borders;
 use styles::selector::FontSelector;
 use themes::{FontStyle, Theme, Typeface, ViewState};
 use traits::{Container, Element, View, WeakElement};
@@ -20,15 +21,17 @@ pub struct Edit {
 #[allow(dead_code)]
 impl Edit {
     pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Edit {
+        let mut fields = FieldsTexted {
+            main: FieldsMain::with_rect(rect, Dimension::Max, Dimension::Min),
+            text: text.to_owned(),
+            text_size,
+            cached_text: None,
+            foreground: FontSelector::new(),
+            listeners: HashMap::new()
+        };
+        fields.main.padding = Borders::with_padding(4);
         Edit {
-            state: RefCell::new(FieldsTexted {
-                main: FieldsMain::with_rect(rect, Dimension::Max, Dimension::Min),
-                text: text.to_owned(),
-                text_size,
-                cached_text: None,
-                foreground: FontSelector::new(),
-                listeners: HashMap::new()
-            })
+            state: RefCell::new(fields)
         }
     }
 
@@ -131,7 +134,7 @@ impl View for Edit {
         }
         let (width, height) = self.calculate_full_size(scale);
         let rect = rect((x, y), (x + width, y + height));
-        self.set_rect(rect.clone());
+        self.set_rect(rect);
         rect
     }
 
@@ -160,7 +163,7 @@ impl View for Edit {
         theme.clip_rect(rect);
         if let Some(text) = &state.cached_text {
             let y = (self.get_rect_height() as f32 - text.height() - padding.top as f32 - padding.bottom as f32) / 2f32;
-            theme.draw_text((rect.min.x as f32 + padding.left as f32).round(), (rect.min.y as f32 + y).round(), text);
+            theme.draw_text((rect.min.x as f32).round(), (rect.min.y as f32 + y).round(), text);
         }
         theme.pop_clip();
     }
@@ -171,6 +174,10 @@ impl View for Edit {
 
     fn set_rect(&mut self, rect: Rect<i32>) {
         self.state.borrow_mut().main.rect = rect;
+    }
+
+    fn get_padding(&self, scale: f64) -> Borders {
+        self.state.borrow().main.padding.scaled(scale)
     }
 
     fn get_bounds(&self) -> (Dimension, Dimension) {
