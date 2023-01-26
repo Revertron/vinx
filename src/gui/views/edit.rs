@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::HashMap;
 
 use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
@@ -132,8 +132,9 @@ impl View for Edit {
             self.state.borrow_mut().main.scale = scale;
             self.layout_text(width, scale);
         }
-        let (width, height) = self.calculate_full_size(scale);
-        let rect = rect((x, y), (x + width, y + height));
+        let (w, h) = self.calculate_size(width, height, scale);
+        let (new_width, new_height) = self.calculate_full_size(scale);
+        let rect = rect((x, y), (x + min(w, new_width), y + min(h, new_height)));
         self.set_rect(rect);
         rect
     }
