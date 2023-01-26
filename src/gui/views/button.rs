@@ -14,6 +14,7 @@ use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
 use gui::views::{Borders, Dimension};
+use styles::selector::FontSelector;
 use views::{FieldsMain, FieldsTexted};
 use crate::gui::views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH};
 
@@ -30,6 +31,7 @@ impl Button {
                 text: text.to_owned(),
                 text_size,
                 cached_text: None,
+                foreground: FontSelector::new(),
                 listeners: HashMap::new()
             })
         }
@@ -130,16 +132,18 @@ impl View for Button {
     }
 
     fn layout_content(&mut self, x: i32, y: i32, width: i32, height: i32, typeface: &Typeface, scale: f64) -> Rect<i32> {
-        println!("{} for width {}", self.get_id(), width);
+        //println!("{} for width {}", self.get_id(), width);
         let typeface = self.get_typeface(typeface);
         self.state.borrow_mut().main.typeface = Some(typeface);
         self.state.borrow_mut().main.scale = scale;
-        // TODO use padding
-        let (new_width, new_height) = self.calculate_size(width, height, scale);
+        let padding = self.get_padding(scale);
+        let horizontal = padding.left + padding.right;
+        let vertical = padding.top + padding.bottom;
+        let (new_width, _new_height) = self.calculate_size(width - horizontal, height - vertical, scale);
         self.layout_text(new_width, scale);
         let (width, height) = self.calculate_full_size(scale);
         let rect = rect((x, y), (x + width, y + height));
-        self.set_rect(rect.clone());
+        self.set_rect(rect);
         rect
     }
 
@@ -235,7 +239,7 @@ impl View for Button {
         false
     }
 
-    fn on_mouse_move(&self, ui: &mut UI, position: Vector2<i32>) -> bool {
+    fn on_mouse_move(&self, _ui: &mut UI, position: Vector2<i32>) -> bool {
         let hit = self.state.borrow().main.rect.hit((position.x, position.y));
         let old_state = self.state.borrow_mut().main.state;
         self.state.borrow_mut().main.state = if hit {
@@ -245,6 +249,7 @@ impl View for Button {
                 match self.state.borrow().main.state {
                     ViewState::Idle => ViewState::Hovered,
                     ViewState::Hovered => ViewState::Hovered,
+                    ViewState::Focused => ViewState::Focused,
                     ViewState::Pressed => ViewState::Pressed,
                     ViewState::Disabled => ViewState::Disabled
                 }

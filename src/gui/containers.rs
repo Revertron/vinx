@@ -107,8 +107,9 @@ impl View for Frame {
     }
 
     fn layout_content(&mut self, x: i32, y: i32, width: i32, height: i32, typeface: &Typeface, scale: f64) -> Rect<i32> {
-        //println!("Laying out for size {}x{}", rect.width(), rect.height());
+        //println!("Laying out for {},{} - {},{}", x, y, width, height);
         let (new_width, new_height) = self.calculate_size(width, height, scale);
+        //println!("New width {}, new height {}", new_width, new_height);
 
         let padding = self.get_padding(scale);
         let mut xx = padding.left;
@@ -148,8 +149,8 @@ impl View for Frame {
             (ww, hh)
         };
         let rect = rect((x, y), (x + width, y + height));
-        self.set_rect(rect.clone());
-        println!("Frame {} sizes: {:?}", self.get_id(), &rect);
+        self.set_rect(rect);
+        //println!("Frame {} sizes: {:?}", self.get_id(), &rect);
         rect
     }
 
@@ -161,13 +162,16 @@ impl View for Frame {
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
         let mut rect = self.state.borrow().rect;
         rect.move_by(origin);
-        theme.set_clip(rect);
+        //println!("Drawing frame {} in rect: {:?}", self.get_id(), &rect);
+        theme.push_clip();
+        theme.clip_rect(rect);
         theme.draw_panel_back(rect, ViewState::Idle);
         theme.draw_panel_body(rect, ViewState::Idle);
         for v in self.views.iter() {
             let v = v.try_borrow().unwrap();
-            v.paint(self.state.borrow().rect.min + origin, theme);
+            v.paint(rect.min + origin, theme);
         }
+        theme.pop_clip();
     }
 
     fn get_rect(&self) -> Rect<i32> {

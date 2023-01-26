@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Revertron <vinx@revertron.com>"]
 
 [dependencies]
-quick-xml = "0.22.0"
+quick-xml = "0.26.0"
 downcast-rs = "1.2.0"
-speedy2d = { version = "1.2" }
+speedy2d = { git = "https://github.com/QuantumBadger/Speedy2D" }
 include_dir = "0.7"

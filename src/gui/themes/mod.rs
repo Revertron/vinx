@@ -67,10 +67,11 @@ impl Default for Typeface {
 }
 
 #[allow(unused)]
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub enum ViewState {
     Idle,
     Hovered,
+    Focused,
     Pressed,
     Disabled
 }

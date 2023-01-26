@@ -93,11 +93,10 @@ impl UI {
         reader.trim_text(true);
 
         let mut txt = Vec::new();
-        let mut buf = Vec::new();
         let mut stack: Vec<Element> = Vec::new();
 
         loop {
-            match reader.read_event(&mut buf) {
+            match reader.read_event() {
                 Ok(Event::Start(ref e)) => {
                     let element = UI::parse_element(&mut ui, e);
                     stack.push(element);
@@ -131,14 +130,11 @@ impl UI {
                     }
                 },
                 // unescape and decode the text event using the reader encoding
-                Ok(Event::Text(e)) => txt.push(e.unescape_and_decode(&reader).unwrap()),
+                Ok(Event::Text(e)) => txt.push(e.unescape().unwrap()),
                 Ok(Event::Eof) => break, // exits the loop when reaching end of file
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
                 _ => (), // There are several other `Event`s we do not consider here
             }
-
-            // if we don't keep a borrow elsewhere, we can clear the buffer to keep memory usage low
-            buf.clear();
         }
         Some(ui)
     }
@@ -149,11 +145,11 @@ impl UI {
             .map(|a| a.unwrap())
             .collect::<Vec<_>>();
         //println!("attributes values: {:?}", attributes);
-        let view_type = String::from_utf8(e.name().to_vec()).unwrap();
+        let view_type = String::from_utf8(e.name().0.to_vec()).unwrap();
         let view = ui.create(&view_type);
         //println!("Loaded {}", &view_type);
         for attribute in attributes {
-            let name = String::from_utf8(attribute.key.to_vec()).unwrap();
+            let name = String::from_utf8(attribute.key.0.to_vec()).unwrap();
             let value = match attribute.value {
                 Cow::Borrowed(c) => {
                     String::from_utf8(c.to_vec()).unwrap()

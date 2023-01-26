@@ -24,6 +24,7 @@ pub struct Classic<'h> {
 impl<'h> Classic<'h> {
     const BACKGROUND: u32 = 0xffd4d0c8;
     const BACKGROUND_LIGHT: u32 = 0xffe4e0d8;
+    const BACKGROUND_WHITE: u32 = 0xffffffff;
     const LIGHT: u32 = 0xff808080;
     const DARK: u32 = 0xff404040;
     const BLACK: u32 = 0xff000000;
@@ -36,7 +37,9 @@ impl<'h> Classic<'h> {
 
 impl<'h> Theme for Classic<'h> {
     fn clear_screen(&mut self) {
+        self.graphics.set_clip(None);
         self.graphics.clear_screen(Color::from_hex_rgb(Classic::BACKGROUND));
+        self.set_clip(self.current_clip);
     }
 
     fn typeface() -> Typeface {

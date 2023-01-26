@@ -10,6 +10,7 @@ use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
 use gui::views::Dimension;
+use styles::selector::FontSelector;
 use views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, FieldsMain, FieldsTexted};
 
 pub struct Label {
@@ -25,6 +26,7 @@ impl Label {
                 text: text.to_owned(),
                 text_size,
                 cached_text: None,
+                foreground: FontSelector::new(),
                 listeners: HashMap::new()
             })
         }
@@ -136,12 +138,14 @@ impl View for Label {
         let state = self.state.borrow();
         let mut rect = state.main.rect;
         rect.move_by(origin);
-        theme.set_clip(rect);
+        theme.push_clip();
+        theme.clip_rect(rect);
         if let Some(text) = &self.state.borrow().cached_text {
             let x = (self.get_rect_width() as f32 - text.width()) / 2f32;
             let y = (self.get_rect_height() as f32 - text.height()) / 2f32;
             theme.draw_text((rect.min.x as f32 + x).round(), (rect.min.y as f32 + y).round(), text);
         }
+        theme.pop_clip();
     }
 
     fn get_rect(&self) -> Rect<i32> {

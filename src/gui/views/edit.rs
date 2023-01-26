@@ -6,6 +6,7 @@ use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
 
 use assets::get_font;
 use events::UiEvent;
+use styles::selector::FontSelector;
 use themes::{FontStyle, Theme, Typeface, ViewState};
 use traits::{Container, Element, View, WeakElement};
 use types::{Point, Rect, rect};
@@ -25,6 +26,7 @@ impl Edit {
                 text: text.to_owned(),
                 text_size,
                 cached_text: None,
+                foreground: FontSelector::new(),
                 listeners: HashMap::new()
             })
         }
@@ -121,15 +123,12 @@ impl View for Edit {
     }
 
     fn layout_content(&mut self, x: i32, y: i32, width: i32, height: i32, typeface: &Typeface, scale: f64) -> Rect<i32> {
-        if self.state.borrow().cached_text.is_some() {
-            // TODO check if area changed
-            return self.get_rect();
+        if self.state.borrow().cached_text.is_none() {
+            let typeface = self.get_typeface(typeface);
+            self.state.borrow_mut().main.typeface = Some(typeface);
+            self.state.borrow_mut().main.scale = scale;
+            self.layout_text(width, scale);
         }
-
-        let typeface = self.get_typeface(typeface);
-        self.state.borrow_mut().main.typeface = Some(typeface);
-        self.state.borrow_mut().main.scale = scale;
-        self.layout_text(width, scale);
         let (width, height) = self.calculate_full_size(scale);
         let rect = rect((x, y), (x + width, y + height));
         self.set_rect(rect.clone());
@@ -149,17 +148,21 @@ impl View for Edit {
         let mut rect = state.main.rect;
         rect.move_by(origin);
         // Drawing the back and frame
-        theme.set_clip(rect);
+        theme.push_clip();
+        theme.clip_rect(rect);
         theme.draw_edit_back(rect, state.main.state);
         theme.draw_edit_body(rect, state.main.state);
+        theme.pop_clip();
         // Drawing the text
         let padding = state.main.padding.scaled(state.main.scale);
         rect.shrink_by(padding.top, padding.left, padding.right, padding.bottom);
-        theme.set_clip(rect);
+        theme.push_clip();
+        theme.clip_rect(rect);
         if let Some(text) = &state.cached_text {
             let y = (self.get_rect_height() as f32 - text.height() - padding.top as f32 - padding.bottom as f32) / 2f32;
             theme.draw_text((rect.min.x as f32 + padding.left as f32).round(), (rect.min.y as f32 + y).round(), text);
         }
+        theme.pop_clip();
     }
 
     fn get_rect(&self) -> Rect<i32> {

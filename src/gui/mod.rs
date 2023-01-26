@@ -7,3 +7,4 @@ pub mod win;
 pub mod themes;
 pub mod types;
 pub mod assets;
+pub mod styles;

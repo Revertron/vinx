@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use gui::events::UiEvent;
 use gui::ui::UI;
+use styles::selector::{BackSelector, FontSelector};
 pub use self::label::Label;
 pub use self::button::Button;
 pub use self::edit::Edit;
@@ -28,6 +29,7 @@ pub struct FieldsMain {
     pub id: String,
     pub state: ViewState,
     pub pressed: bool,
+    pub background: BackSelector,
     pub parent: Option<WeakElement>,
     pub typeface: Option<Typeface>
 }
@@ -45,6 +47,7 @@ impl FieldsMain {
             id: String::new(),
             state: ViewState::Idle,
             pressed: false,
+            background: BackSelector::new(),
             parent: None,
             typeface: None
         }
@@ -57,6 +60,7 @@ pub struct FieldsTexted {
     pub text: String,
     pub text_size: f32,
     pub cached_text: Option<Rc<FormattedTextBlock>>,
+    pub foreground: FontSelector,
     pub listeners: HashMap<UiEvent, Box<dyn FnMut(&mut UI, &dyn View) -> bool>>
 }
 
