@@ -4,6 +4,7 @@ extern crate downcast_rs;
 extern crate include_dir;
 extern crate quick_xml;
 extern crate speedy2d;
+extern crate rand;
 
 use speedy2d::dimen::Vector2;
 use speedy2d::Window;
@@ -12,7 +13,7 @@ use speedy2d::window::{WindowCreationOptions, WindowPosition, WindowSize};
 use gui::*;
 use gui::themes::Theme;
 use gui::ui::UI;
-use gui::win::Win;
+use gui::win::{Win, WinEvent};
 use themes::Classic;
 use traits::View;
 use views::{Button, Edit};
@@ -33,10 +34,11 @@ fn main() {
         button.borrow_mut().onclick(Box::new(button1_click));
     }
 
-    let win = Win::new(ui);
     let window_size = WindowSize::PhysicalPixels(Vector2::new(WIDTH, HEIGHT));
     let options = WindowCreationOptions::new_windowed(window_size, Some(WindowPosition::Center));
-    let window: Window<String> = Window::new_with_user_events(TITLE, options).unwrap();
+    let window: Window<WinEvent> = Window::new_with_user_events(TITLE, options).unwrap();
+    let sender = window.create_user_event_sender();
+    let win = Win::new(ui, sender);
     window.run_loop(win);
 }
 

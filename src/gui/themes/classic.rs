@@ -6,7 +6,9 @@ use speedy2d::dimen::Vector2;
 use speedy2d::font::FormattedTextBlock;
 use speedy2d::Graphics2D;
 use speedy2d::shape::Rectangle;
+use gui::common::get_utc_time;
 use gui::themes::{Theme, Typeface, ViewState};
+use gui::themes::utils::{draw_dashed_rectangle, draw_rounded_rectangle};
 use gui::types::Rect;
 use types;
 use types::rect;
@@ -67,7 +69,7 @@ impl<'h> Theme for Classic<'h> {
     }
 
     fn pop_clip(&mut self) {
-        if let Some(clip) = self.clip_stack.pop_front() {
+        if let Some(clip) = self.clip_stack.pop_back() {
             self.set_clip(clip);
         }
     }
@@ -76,10 +78,10 @@ impl<'h> Theme for Classic<'h> {
     fn draw_button_back(&mut self, rect: Rect<i32>, state: ViewState) {
         let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);
         let bottom_right = Vector2::new(rect.max.x as f32, rect.max.y as f32);
-        let color = match state {
-            ViewState::Hovered => Color::from_hex_rgb(Classic::BACKGROUND_LIGHT),
-            ViewState::Pressed => Color::from_hex_rgb(Classic::BACKGROUND_LIGHT),
-            _ => Color::from_hex_rgb(Classic::BACKGROUND)
+        let color = if state.hovered || state.pressed {
+            Color::from_hex_rgb(Classic::BACKGROUND_LIGHT)
+        } else {
+            Color::from_hex_rgb(Classic::BACKGROUND)
         };
         self.graphics.draw_rectangle(Rectangle::new(top_left, bottom_right), color);
     }
@@ -90,8 +92,8 @@ impl<'h> Theme for Classic<'h> {
         let border_half: f32 = (self.scale / 2f64) as f32;
         let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);
         let bottom_right = Vector2::new(rect.max.x as f32, rect.max.y as f32);
-        match state {
-            ViewState::Pressed => {
+        match state.pressed && state.hovered {
+            true => {
                 let border2: f32 = (self.scale * 2f64) as f32;
                 let color = Color::from_hex_rgb(Classic::LIGHT);
                 self.graphics.draw_line((top_left.x, top_left.y + border_half), (bottom_right.x - border, top_left.y + border_half), border, color);
@@ -104,7 +106,7 @@ impl<'h> Theme for Classic<'h> {
                 self.graphics.draw_line((top_left.x + border, bottom_right.y - border - border_half), (bottom_right.x - border, bottom_right.y - border - border_half), border, color);
                 self.graphics.draw_line((bottom_right.x - border - border_half, top_left.y + border), (bottom_right.x - border - border_half, bottom_right.y - border), border, color);
             }
-            _ => {
+            false => {
                 let color = Color::from_hex_rgb(0xffffff);
                 self.graphics.draw_line((top_left.x, top_left.y + border_half), (bottom_right.x - border_half, top_left.y + border_half), border, color);
                 self.graphics.draw_line((top_left.x + border_half, top_left.y + border_half), (top_left.x + border_half, bottom_right.y - border_half), border, color);
@@ -115,6 +117,13 @@ impl<'h> Theme for Classic<'h> {
                 self.graphics.draw_line((top_left.x + border, bottom_right.y - border - border_half), (bottom_right.x - border, bottom_right.y - border - border_half), border, color);
                 self.graphics.draw_line((bottom_right.x - border - border_half, top_left.y + border), (bottom_right.x - border - border_half, bottom_right.y - border), border, color);
             }
+        }
+        if state.focused {
+            let color = Color::from_hex_rgb(0x000000);
+            let padding = border * 4f32;
+            draw_dashed_rectangle(self.graphics, top_left.x + padding - 1.0, top_left.y + padding - 1.0, bottom_right.x - padding, bottom_right.y - padding, 2.5f32, border, color);
+            //self.graphics.draw_line((top_left.x + border * 4f32, top_left.y + border * 4f32), (bottom_right.x - border * 4f32, top_left.y + border * 4f32), border, color);
+            //self.graphics.draw_line((top_left.x + border * 4f32, bottom_right.y - border * 4f32), (bottom_right.x - border * 4f32, bottom_right.y - border * 4f32), border, color);
         }
     }
 
@@ -150,11 +159,21 @@ impl<'h> Theme for Classic<'h> {
         self.graphics.draw_line((bottom_right.x - border - border_half, top_left.y + border), (bottom_right.x - border - border_half, bottom_right.y - border), border, color);
     }
 
+    fn draw_edit_caret(&mut self, rect: Rect<i32>, state: ViewState) {
+        if !state.focused {
+            return;
+        }
+        let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);
+        let bottom_right = Vector2::new(rect.max.x as f32, rect.max.y as f32);
+        let color = Color::from_hex_rgb(Classic::BLACK);
+        self.graphics.draw_rectangle(Rectangle::new(top_left, bottom_right), color);
+    }
+
     #[allow(unused)]
     fn draw_panel_back(&mut self, rect: Rect<i32>, state: ViewState) {
         let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);
         let bottom_right = Vector2::new(rect.max.x as f32, rect.max.y as f32);
-        let color = Color::from_hex_rgb(0xaaaaaa);
+        let color = Color::from_hex_rgb(Classic::BACKGROUND);
         self.graphics.draw_rectangle(Rectangle::new(top_left, bottom_right), color);
     }
 
@@ -163,8 +182,9 @@ impl<'h> Theme for Classic<'h> {
         let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);
         let bottom_right = Vector2::new(rect.max.x as f32, rect.max.y as f32);
         let border: f32 = 1f32;
-        let color = Color::from_hex_rgb(0xff202020);
+        let color = Color::from_hex_rgb(0xff808080);
         let half = 0.5f32;
+        //draw_rounded_rectangle(self.graphics, rect.min.x as f32, rect.min.y as f32, rect.max.x as f32, rect.max.y as f32, 16f32, 2f32, color);
         self.graphics.draw_line((top_left.x, top_left.y + border - half), (bottom_right.x, top_left.y + border - half), border, color);
         self.graphics.draw_line((top_left.x, bottom_right.y - half), (bottom_right.x, bottom_right.y - half), border, color);
         self.graphics.draw_line((top_left.x + half, top_left.y + border), (top_left.x + half, bottom_right.y + border), border, color);

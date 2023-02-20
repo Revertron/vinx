@@ -6,7 +6,7 @@ use std::rc::Rc;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use speedy2d::dimen::Vector2;
-use speedy2d::window::MouseButton;
+use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
 
 use gui::containers::Frame;
 use gui::themes::Theme;
@@ -198,6 +198,36 @@ impl UI {
             None => false,
             Some(root) => {
                 root.borrow().on_mouse_button_up(self, position, button)
+            }
+        }
+    }
+
+    pub fn on_key_down(&mut self, virtual_key_code: Option<VirtualKeyCode>, scancode: KeyScancode, modifiers: ModifiersState) -> bool {
+        let root = self.root.clone();
+        match root {
+            None => false,
+            Some(root) => {
+                root.borrow().on_key_down(self, virtual_key_code, scancode, modifiers)
+            }
+        }
+    }
+
+    pub fn on_key_up(&mut self, virtual_key_code: Option<VirtualKeyCode>, scancode: KeyScancode, modifiers: ModifiersState) -> bool {
+        let root = self.root.clone();
+        match root {
+            None => false,
+            Some(root) => {
+                root.borrow().on_key_up(self, virtual_key_code, scancode, modifiers)
+            }
+        }
+    }
+
+    pub fn on_key_char(&mut self, unicode_codepoint: char, modifiers: ModifiersState) -> bool {
+        let root = self.root.clone();
+        match root {
+            None => false,
+            Some(root) => {
+                root.borrow().on_key_char(self, unicode_codepoint, modifiers)
             }
         }
     }

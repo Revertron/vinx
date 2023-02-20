@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
+use std::time::Duration;
 use speedy2d::dimen::Vector2;
 use speedy2d::Graphics2D;
-use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode, WindowHandler, WindowHelper, WindowStartupInfo};
+use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, UserEventSender, VirtualKeyCode, WindowHandler, WindowHelper, WindowStartupInfo};
 
 use gui::ui::UI;
 use gui::themes::*;
@@ -11,18 +12,20 @@ pub struct Win<T> {
     width: u32,
     height: u32,
     mouse_pos: Vector2<i32>,
-    mod_state: Option<ModifiersState>,
+    mod_state: ModifiersState,
+    sender: UserEventSender<WinEvent>,
     t: PhantomData<T>
 }
 
 impl<T> Win<T> {
-    pub fn new(ui: UI) -> Self {
+    pub fn new(ui: UI, sender: UserEventSender<WinEvent>) -> Self {
         Win {
             ui,
             width: 0,
             height: 0,
             mouse_pos: Vector2::new(-1, -1),
-            mod_state: None,
+            mod_state: ModifiersState::default(),
+            sender,
             t: PhantomData::default()
         }
     }
@@ -34,6 +37,20 @@ impl<T> WindowHandler<T> for Win<T> {
         self.width = info.viewport_size_pixels().x;
         self.height = info.viewport_size_pixels().y;
         self.ui.layout(self.width, self.height, info.scale_factor());
+        helper.request_redraw();
+
+        let user_event_sender = self.sender.clone();
+
+        std::thread::spawn(move || {
+            loop {
+                // Send a message every 16ms
+                user_event_sender.send_event(WinEvent::Repaint).unwrap();
+                std::thread::sleep(Duration::from_millis(16));
+            }
+        });
+    }
+
+    fn on_user_event(&mut self, helper: &mut WindowHelper<T>, event: T) {
         helper.request_redraw();
     }
 
@@ -79,10 +96,16 @@ impl<T> WindowHandler<T> for Win<T> {
 
     fn on_key_down(&mut self, helper: &mut WindowHelper<T>, virtual_key_code: Option<VirtualKeyCode>, scancode: KeyScancode) {
         println!("KeyCode: {:?}, scancode: {:?} down", virtual_key_code, scancode);
+        if self.ui.on_key_down(virtual_key_code, scancode, self.mod_state.clone()) {
+            helper.request_redraw();
+        }
     }
 
     fn on_key_up(&mut self, helper: &mut WindowHelper<T>, virtual_key_code: Option<VirtualKeyCode>, scancode: KeyScancode) {
         println!("KeyCode: {:?}, scancode: {:?} up", virtual_key_code, scancode);
+        if self.ui.on_key_up(virtual_key_code, scancode, self.mod_state.clone()) {
+            helper.request_redraw();
+        }
     }
 
     fn on_keyboard_char(&mut self,helper: &mut WindowHelper<T>, unicode_codepoint: char) {
@@ -90,9 +113,17 @@ impl<T> WindowHandler<T> for Win<T> {
         if unicode_codepoint == 27 as char {
             helper.terminate_loop();
         }
+        if self.ui.on_key_char(unicode_codepoint, self.mod_state.clone()) {
+            helper.request_redraw();
+        }
     }
 
     fn on_keyboard_modifiers_changed(&mut self, helper: &mut WindowHelper<T>, state: ModifiersState) {
         println!("Modifiers: {:?}", &state);
     }
+}
+
+#[derive(Copy, Clone)]
+pub enum WinEvent {
+    Repaint
 }

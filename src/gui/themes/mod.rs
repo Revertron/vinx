@@ -1,4 +1,5 @@
 mod classic;
+mod utils;
 
 use std::rc::Rc;
 use speedy2d::font::FormattedTextBlock;
@@ -17,6 +18,7 @@ pub trait Theme {
     fn draw_button_text(&mut self, rect: Rect<i32>, state: ViewState, size: usize, text: &str);
     fn draw_edit_back(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_edit_body(&mut self, rect: Rect<i32>, state: ViewState);
+    fn draw_edit_caret(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_panel_back(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_panel_body(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_text(&mut self, x: f32, y: f32, text: &Rc<FormattedTextBlock>);
@@ -68,10 +70,37 @@ impl Default for Typeface {
 
 #[allow(unused)]
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub enum ViewState {
-    Idle,
-    Hovered,
-    Focused,
-    Pressed,
-    Disabled
+pub struct ViewState {
+    pub enabled: bool,
+    pub focusable: bool,
+    pub focused: bool,
+    pub hovered: bool,
+    pub pressed: bool,
+    pub checked: bool
+}
+
+impl ViewState {
+    pub fn no_focus() -> Self {
+        ViewState {
+            enabled: true,
+            focusable: false,
+            focused: false,
+            hovered: false,
+            pressed: false,
+            checked: false
+        }
+    }
+}
+
+impl Default for ViewState {
+    fn default() -> Self {
+        ViewState {
+            enabled: true,
+            focusable: true,
+            focused: false,
+            hovered: false,
+            pressed: false,
+            checked: false
+        }
+    }
 }

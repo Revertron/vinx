@@ -20,11 +20,15 @@ pub struct Label {
 #[allow(dead_code)]
 impl Label {
     pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Label {
+        let mut main = FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min);
+        main.state.focusable = false;
         Label {
             state: RefCell::new(FieldsTexted {
-                main: FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min),
+                main,
                 text: text.to_owned(),
                 text_size,
+                line_height: 0f32,
+                single_line: true,
                 cached_text: None,
                 foreground: FontSelector::new(),
                 listeners: HashMap::new()
@@ -86,6 +90,7 @@ impl View for Label {
             "text" => { self.set_text(value) }
             "font" => { self.set_font(value) }
             "font_style" => { self.set_font_style(value) }
+            "break" => { self.state.borrow_mut().main.break_line = value.parse().unwrap_or(false) }
             &_ => {}
         }
     }
@@ -148,6 +153,10 @@ impl View for Label {
         theme.pop_clip();
     }
 
+    fn get_state(&self) -> Option<ViewState> {
+        Some(self.state.borrow().main.state)
+    }
+
     fn get_rect(&self) -> Rect<i32> {
         self.state.borrow().main.rect
     }
@@ -171,6 +180,10 @@ impl View for Label {
                 (width, height)
             }
         }
+    }
+
+    fn is_break(&self) -> bool {
+        self.state.borrow().main.break_line
     }
 
     fn set_width(&mut self, width: Dimension) {

@@ -9,6 +9,7 @@ use std::rc::Rc;
 use speedy2d::font::FormattedTextBlock;
 use std::collections::HashMap;
 use std::str::FromStr;
+use gui::common::random_string;
 use gui::events::UiEvent;
 use gui::ui::UI;
 use styles::selector::{BackSelector, FontSelector};
@@ -16,7 +17,7 @@ pub use self::label::Label;
 pub use self::button::Button;
 pub use self::edit::Edit;
 
-pub const BUTTON_MIN_WIDTH: i32 = 24;
+pub const BUTTON_MIN_WIDTH: i32 = 80;
 pub const BUTTON_MIN_HEIGHT: i32 = 24;
 
 /// Stores all main fields of elements.
@@ -28,7 +29,7 @@ pub struct FieldsMain {
     pub scale: f64,
     pub id: String,
     pub state: ViewState,
-    pub pressed: bool,
+    pub break_line: bool,
     pub background: BackSelector,
     pub parent: Option<WeakElement>,
     pub typeface: Option<Typeface>
@@ -44,9 +45,9 @@ impl FieldsMain {
             rect,
             padding: Borders::default(),
             scale: 1.0,
-            id: String::new(),
-            state: ViewState::Idle,
-            pressed: false,
+            id: random_string(16),
+            state: ViewState::default(),
+            break_line: false,
             background: BackSelector::new(),
             parent: None,
             typeface: None
@@ -59,6 +60,8 @@ pub struct FieldsTexted {
     pub main: FieldsMain,
     pub text: String,
     pub text_size: f32,
+    pub line_height: f32,
+    pub single_line: bool,
     pub cached_text: Option<Rc<FormattedTextBlock>>,
     pub foreground: FontSelector,
     pub listeners: HashMap<UiEvent, Box<dyn FnMut(&mut UI, &dyn View) -> bool>>
@@ -143,7 +146,7 @@ impl FromStr for Dimension {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Direction {
     Horizontal,
     Vertical

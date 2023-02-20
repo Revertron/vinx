@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use speedy2d::dimen::Vector2;
-use speedy2d::window::MouseButton;
+use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
 
 use themes::{FontStyle, Theme, Typeface, ViewState};
 use traits::{Container, Element, View, WeakElement};
@@ -15,14 +15,60 @@ pub struct Frame {
     state: RefCell<FieldsMain>,
     direction: Direction,
     views: Vec<Element>,
+    breaking: bool
+}
+
+impl Frame {
+    pub(crate) fn focus_next(&self) -> bool {
+        let mut focused = -1;
+        for i in 0..self.views.len() {
+            let v = &self.views[i];
+            if v.borrow().is_focused() {
+                focused = i as i32;
+                continue;
+            }
+            if let Some(state) = v.borrow().get_state() {
+                if state.focusable && focused >= 0 {
+                    let previous = &self.views[focused as usize];
+                    previous.borrow().set_focused(false);
+                    v.borrow().set_focused(true);
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    pub(crate) fn focus_prev(&self) -> bool {
+        let mut focused = -1;
+        for i in (0..self.views.len()).rev() {
+            let v = &self.views[i];
+            if v.borrow().is_focused() {
+                focused = i as i32;
+                continue;
+            }
+            if let Some(state) = v.borrow().get_state() {
+                if state.focusable && focused >= 0 {
+                    let previous = &self.views[focused as usize];
+                    previous.borrow().set_focused(false);
+                    v.borrow().set_focused(true);
+                    return true;
+                }
+            }
+        }
+        false
+    }
 }
 
 impl Frame {
     pub fn new(rect: Rect<i32>, width: Dimension, height: Dimension) -> Frame {
+        let mut main = FieldsMain::with_rect(rect, width, height);
+        main.state.focusable = false;
         Frame {
-            state: RefCell::new(FieldsMain::with_rect(rect, width, height)),
+            state: RefCell::new(main),
             direction: Direction::default(),
             views: Vec::new(),
+            breaking: false
         }
     }
 
@@ -86,6 +132,8 @@ impl View for Frame {
             "id" => { self.set_id(value) }
             "font" => { self.set_font(value) }
             "font_style" => { self.set_font_style(value) }
+            "breaking" => { self.breaking = value.parse().unwrap_or(false) }
+            "break" => { self.state.borrow_mut().break_line = value.parse().unwrap_or(false) }
             &_ => {}
         }
     }
@@ -114,6 +162,8 @@ impl View for Frame {
         let padding = self.get_padding(scale);
         let mut xx = padding.left;
         let mut yy = padding.top;
+        let max_x = new_width - padding.right;
+        let mut max_height = 0;
         let typeface = match self.state.borrow().typeface.clone() {
             None => typeface.clone(),
             Some(t) => t
@@ -122,11 +172,31 @@ impl View for Frame {
             let mut v = v.try_borrow_mut().unwrap();
             v.layout_content(xx, yy, new_width - xx - padding.right, new_height - yy - padding.bottom, &typeface, scale);
             // Get maximum occupied area
-            let view_size = v.calculate_full_size(scale);
+            let (w, h) = v.calculate_full_size(scale);
             match self.direction {
-                Direction::Horizontal => xx = xx + view_size.0,
-                Direction::Vertical => yy = yy + view_size.1
+                Direction::Horizontal => xx = xx + w,
+                Direction::Vertical => yy = yy + h
             }
+            if self.breaking && self.direction == Direction::Horizontal {
+                if xx > max_x {
+                    yy += max_height;
+                    xx = padding.left;
+                    v.layout_content(xx, yy, new_width - xx - padding.right, new_height - yy - padding.bottom, &typeface, scale);
+                    // Get maximum occupied area
+                    let (w, h) = v.calculate_full_size(scale);
+                    xx = xx + w;
+                    max_height = h;
+                }
+                if v.is_break() {
+                    let (_, h) = v.calculate_full_size(scale);
+                    xx = padding.left;
+                    yy += h;
+                }
+            }
+            if h > max_height {
+                max_height = h;
+            }
+            //println!("View {} is at rect {:?}", &v.get_id(), &v.get_rect());
         }
 
         let (w, h) = self.calculate_full_size(scale);
@@ -161,17 +231,22 @@ impl View for Frame {
 
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
         let mut rect = self.state.borrow().rect;
+        let start = rect.min + origin;
         rect.move_by(origin);
         //println!("Drawing frame {} in rect: {:?}", self.get_id(), &rect);
         theme.push_clip();
         theme.clip_rect(rect);
-        theme.draw_panel_back(rect, ViewState::Idle);
-        theme.draw_panel_body(rect, ViewState::Idle);
+        theme.draw_panel_back(rect, self.state.borrow().state);
+        theme.draw_panel_body(rect, self.state.borrow().state);
         for v in self.views.iter() {
             let v = v.try_borrow().unwrap();
-            v.paint(rect.min + origin, theme);
+            v.paint(start, theme);
         }
         theme.pop_clip();
+    }
+
+    fn get_state(&self) -> Option<ViewState> {
+        Some(self.state.borrow().state)
     }
 
     fn get_rect(&self) -> Rect<i32> {
@@ -207,6 +282,28 @@ impl View for Frame {
             }
         }
         (rect.width(), rect.height())
+    }
+
+    fn is_focused(&self) -> bool {
+        for v in self.views.iter() {
+            if v.borrow().is_focused() {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn is_break(&self) -> bool {
+        self.state.borrow().break_line
+    }
+
+    fn set_focused(&self, focused: bool) {
+        if focused {
+            return;
+        }
+        for v in self.views.iter() {
+            v.borrow().set_focused(false);
+        }
     }
 
     fn set_width(&mut self, width: Dimension) {
@@ -254,8 +351,19 @@ impl View for Frame {
     fn on_mouse_button_down(&self, ui: &mut UI, position: Vector2<i32>, button: MouseButton) -> bool {
         println!("Mouse down in {}", &self.state.borrow().id);
         let position = (position.x - self.state.borrow().rect.min.x, position.y - self.state.borrow().rect.min.y);
+        let mut focused = false;
         for v in self.views.iter().rev() {
+            let f = v.borrow().is_focused();
             if v.borrow().on_mouse_button_down(ui, Vector2::from(position), button) {
+                // If focused changed to true
+                focused = !f && v.borrow().is_focused();
+                if focused {
+                    for vv in self.views.iter() {
+                        if vv.borrow().get_id() != v.borrow().get_id() {
+                            vv.borrow_mut().set_focused(!focused);
+                        }
+                    }
+                }
                 return true;
             }
         }
@@ -267,6 +375,63 @@ impl View for Frame {
         for v in self.views.iter().rev() {
             if v.borrow().on_mouse_button_up(ui, Vector2::from(position), button) {
                 return true;
+            }
+        }
+        false
+    }
+
+    fn on_key_down(&self, ui: &mut UI, virtual_key_code: Option<VirtualKeyCode>, scancode: KeyScancode, state: ModifiersState) -> bool {
+        for v in self.views.iter() {
+            if v.borrow().is_focused() {
+                println!("Found focused view {}", v.borrow().get_id());
+                if v.borrow().on_key_down(ui, virtual_key_code, scancode, state.clone()) {
+                    return true;
+                }
+            }
+        }
+        if let Some(code) = virtual_key_code {
+            if code == VirtualKeyCode::Right && self.direction == Direction::Horizontal {
+                if self.focus_next() {
+                    return true;
+                }
+            }
+            if code == VirtualKeyCode::Left && self.direction == Direction::Horizontal {
+                if self.focus_prev() {
+                    return true;
+                }
+            }
+            if code == VirtualKeyCode::Up && self.direction == Direction::Vertical {
+                if self.focus_prev() {
+                    return true;
+                }
+            }
+            if code == VirtualKeyCode::Down && self.direction == Direction::Vertical {
+                if self.focus_next() {
+                    return true;
+                }
+            }
+        }
+        println!("KD finished in {}", self.get_id());
+        false
+    }
+
+    fn on_key_up(&self, ui: &mut UI, virtual_key_code: Option<VirtualKeyCode>, scancode: KeyScancode, state: ModifiersState) -> bool {
+        for v in self.views.iter() {
+            if v.borrow().is_focused() {
+                if v.borrow().on_key_up(ui, virtual_key_code, scancode, state.clone()) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    fn on_key_char(&self, ui: &mut UI, unicode_codepoint: char, state: ModifiersState) -> bool {
+        for v in self.views.iter() {
+            if v.borrow().is_focused() {
+                if v.borrow().on_key_char(ui, unicode_codepoint, state.clone()) {
+                    return true;
+                }
             }
         }
         false

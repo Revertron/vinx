@@ -48,7 +48,7 @@ pub fn rect<N, P: Into<Point<N>>>(min: P, max: P) -> Rect<N> {
     Rect { min: min.into(), max: max.into() }
 }
 
-impl<N: ops::Sub<Output = N> + Copy + std::ops::Add<Output = N> + std::cmp::PartialOrd + std::ops::AddAssign + std::ops::SubAssign> Rect<N> {
+impl<N: ops::Sub<Output = N> + Copy + Add<Output = N> + PartialOrd + AddAssign + ops::SubAssign> Rect<N> {
     pub fn width(&self) -> N {
         self.max.x - self.min.x
     }
@@ -77,6 +77,13 @@ impl<N: ops::Sub<Output = N> + Copy + std::ops::Add<Output = N> + std::cmp::Part
         self.min.x += left;
         self.max.x -= right;
         self.max.y -= bottom;
+    }
+
+    pub fn clear(&mut self) {
+        self.min.x -= self.min.x;
+        self.min.y -= self.min.y;
+        self.max.x -= self.max.x;
+        self.max.y -= self.max.y;
     }
 
     pub fn hit<P: Into<Point<N>>>(&self, point: P) -> bool {

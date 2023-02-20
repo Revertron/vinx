@@ -30,6 +30,8 @@ impl Button {
                 main: FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min),
                 text: text.to_owned(),
                 text_size,
+                line_height: 0f32,
+                single_line: true,
                 cached_text: None,
                 foreground: FontSelector::new(),
                 listeners: HashMap::new()
@@ -45,7 +47,8 @@ impl Button {
             state.cached_text = None;
         }
         let scale = self.state.borrow().main.scale;
-        self.layout_text(self.get_rect_width(), scale);
+        let single_line = self.state.borrow().single_line;
+        self.layout_text(self.get_rect_width(), single_line, scale);
     }
 
     fn get_typeface(&self, parent_typeface: &Typeface) -> Typeface {
@@ -83,7 +86,7 @@ impl Button {
         self.state.borrow_mut().main.typeface = Some(typeface)
     }
 
-    fn layout_text(&self, max_width: i32, scale: f64) {
+    fn layout_text(&self, max_width: i32, single_line: bool, scale: f64) {
         if max_width <= 0 {
             self.state.borrow_mut().cached_text = None;
             return;
@@ -91,7 +94,10 @@ impl Button {
         let typeface = self.state.borrow().main.typeface.clone();
         if let Some(typeface) = typeface {
             if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
-                let options = TextOptions::new().with_wrap_to_width(max_width as f32, TextAlignment::Left);
+                let options = match single_line {
+                    true => TextOptions::new(),
+                    false => TextOptions::new().with_wrap_to_width(max_width as f32, TextAlignment::Left)
+                };
                 let size = self.state.borrow().text_size * scale as f32;
                 let text = font.layout_text(&self.state.borrow().text, size, options);
                 self.state.borrow_mut().cached_text = Some(text);
@@ -111,6 +117,7 @@ impl View for Button {
             "text" => { self.set_text(value) }
             "font" => { self.set_font(value) }
             "font_style" => { self.set_font_style(value) }
+            "break" => { self.state.borrow_mut().main.break_line = value.parse().unwrap_or(false) }
             &_ => {}
         }
     }
@@ -139,8 +146,9 @@ impl View for Button {
         let padding = self.get_padding(scale);
         let horizontal = padding.left + padding.right;
         let vertical = padding.top + padding.bottom;
-        let (new_width, _new_height) = self.calculate_size(width - horizontal, height - vertical, scale);
-        self.layout_text(new_width, scale);
+        let (new_width, _new_height) = self.calculate_size(width.max(BUTTON_MIN_WIDTH) - horizontal, height.max(BUTTON_MIN_HEIGHT) - vertical, scale);
+        let single_line = self.state.borrow().single_line;
+        self.layout_text(new_width, single_line, scale);
         let (width, height) = self.calculate_full_size(scale);
         let rect = rect((x, y), (x + width, y + height));
         self.set_rect(rect);
@@ -172,6 +180,10 @@ impl View for Button {
         theme.pop_clip();
     }
 
+    fn get_state(&self) -> Option<ViewState> {
+        Some(self.state.borrow().main.state)
+    }
+
     fn get_rect(&self) -> Rect<i32> {
         self.state.borrow().main.rect
     }
@@ -199,6 +211,18 @@ impl View for Button {
                 (width, height)
             }
         }
+    }
+
+    fn is_focused(&self) -> bool {
+        self.state.borrow().main.state.focused
+    }
+
+    fn is_break(&self) -> bool {
+        self.state.borrow().main.break_line
+    }
+
+    fn set_focused(&self, focused: bool) {
+        self.state.borrow_mut().main.state.focused = focused;
     }
 
     fn set_width(&mut self, width: Dimension) {
@@ -242,29 +266,18 @@ impl View for Button {
     fn on_mouse_move(&self, _ui: &mut UI, position: Vector2<i32>) -> bool {
         let hit = self.state.borrow().main.rect.hit((position.x, position.y));
         let old_state = self.state.borrow_mut().main.state;
-        self.state.borrow_mut().main.state = if hit {
-            if matches!(self.state.borrow().main.state, ViewState::Idle) && self.state.borrow().main.pressed {
-                ViewState::Pressed
-            } else {
-                match self.state.borrow().main.state {
-                    ViewState::Idle => ViewState::Hovered,
-                    ViewState::Hovered => ViewState::Hovered,
-                    ViewState::Focused => ViewState::Focused,
-                    ViewState::Pressed => ViewState::Pressed,
-                    ViewState::Disabled => ViewState::Disabled
-                }
-            }
-        } else {
-            ViewState::Idle
-        };
+        self.state.borrow_mut().main.state.hovered = hit;
         self.state.borrow_mut().main.state != old_state
     }
 
     fn on_mouse_button_down(&self, ui: &mut UI, position: Vector2<i32>, button: MouseButton) -> bool {
-        if self.state.borrow().main.rect.hit((position.x, position.y)) && matches!(button, MouseButton::Left) {
+        let hit = self.state.borrow().main.rect.hit((position.x, position.y));
+        if hit {
             let mut state = self.state.borrow_mut();
-            state.main.pressed = true;
-            state.main.state = ViewState::Pressed;
+            if matches!(button, MouseButton::Left) {
+                state.main.state.pressed = true;
+            }
+            state.main.state.focused = true;
             return true;
         }
         false
@@ -272,20 +285,18 @@ impl View for Button {
 
     fn on_mouse_button_up(&self, ui: &mut UI, position: Vector2<i32>, button: MouseButton) -> bool {
         let hit = self.state.borrow().main.rect.hit((position.x, position.y));
-        if self.state.borrow().main.pressed && hit {
-            println!("Doing click!");
-            self.click(ui);
-            let mut state = self.state.borrow_mut();
-            state.main.pressed = false;
-            state.main.state = ViewState::Hovered;
-            return true;
-        }
-        if self.state.borrow().main.pressed && !hit && matches!(button, MouseButton::Left) {
-            println!("Cancelled click");
-            let mut state = self.state.borrow_mut();
-            state.main.pressed = false;
-            state.main.state = ViewState::Idle;
-            return true;
+        if matches!(button, MouseButton::Left) {
+            if self.state.borrow().main.state.pressed {
+                if hit {
+                    println!("Doing click!");
+                    self.click(ui);
+                } else {
+                    println!("Cancelled click");
+                }
+                let mut state = self.state.borrow_mut();
+                state.main.state.pressed = false;
+                return true;
+            }
         }
         false
     }

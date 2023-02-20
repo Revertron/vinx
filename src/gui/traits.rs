@@ -4,7 +4,7 @@ use downcast_rs::Downcast;
 use speedy2d::dimen::Vector2;
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
 use gui::ui::UI;
-use gui::themes::Theme;
+use gui::themes::{Theme, ViewState};
 use gui::types::{Rect, Point};
 use themes::Typeface;
 use views::{Borders, Dimension};
@@ -33,6 +33,7 @@ pub trait View: Downcast {
     }
     fn fits_in_rect(&self, width: i32, height: i32, scale: f64) -> bool;
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme);
+    fn get_state(&self) -> Option<ViewState>;
     fn get_rect(&self) -> Rect<i32>;
     fn set_rect(&mut self, rect: Rect<i32>);
     fn get_padding(&self, scale: f64) -> Borders { Borders::default().scaled(scale) }
@@ -43,6 +44,10 @@ pub trait View: Downcast {
     fn get_bounds(&self) -> (Dimension, Dimension);
     /// Returns unscaled content sizes
     fn get_content_size(&self) -> (i32, i32);
+    fn is_focused(&self) -> bool { false }
+    fn is_break(&self) -> bool { false }
+    #[allow(unused_variables)]
+    fn set_focused(&self, focused: bool) {}
     fn calculate_full_size(&self, scale: f64) -> (i32, i32) {
         let (width, height) = self.get_content_size();
         let padding = self.get_padding(scale);

@@ -6,5 +6,11 @@ authors = ["Revertron <vinx@revertron.com>"]
 [dependencies]
 quick-xml = "0.26.0"
 downcast-rs = "1.2.0"
-speedy2d = { git = "https://github.com/QuantumBadger/Speedy2D" }
+speedy2d = "1.10.0"
 include_dir = "0.7"
+rand = "0.8.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true  # Automatically strip symbols from the binary.

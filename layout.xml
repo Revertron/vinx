@@ -8,15 +8,30 @@
 
     <Edit id="edit1" text="Some very very very long text to edit and test clipping" width="40%"/>
 
-    <Frame id="content" font="Akkurat" direction="vertical" width="min" padding="8">
-        <Button id="btn4" text="Akkurat 4" width="max"/>
-        <Button id="btn5" text="Bold 5" font_style="Bold" width="max"/>
-        <Button id="btn6" text="Button 6" width="max"/>
+    <Frame width="min" height="min">
+        <Frame id="content" font="Akkurat" direction="vertical" width="min" padding="8">
+            <Edit id="edit3" text="Some very very very long text to edit and test clipping" width="min"/>
+            <Button id="btn4" text="Akkurat 4" width="max"/>
+            <Button id="btn5" text="Bold 5" font_style="Bold" width="max"/>
+            <Button id="btn6" text="Button 6" width="max"/>
+        </Frame>
+        <Frame id="wrapping" font="Akkurat" width="min" padding="8" breaking="true">
+            <Label id="label2" text="Horizontal layout with breaks" width="min" break="true"/>
+            <Button id="btn4-1" text="Button 1-1" width="min"/>
+            <Button id="btn5-1" text="Button 1-2 with break" width="min" break="true"/>
+            <Button id="btn6-1" text="Button 2-1" width="min"/>
+            <Button id="btn6-1" text="Button 3-1" width="min"/>
+            <Button id="btn6-1" text="Button 3-2" width="min"/>
+        </Frame>
     </Frame>
 
-    <Frame id="footer" width="30%" height="min">
+    <Frame id="footer" width="30%" height="min" breaking="true">
         <Button id="btn7" text="Tlačidlo 7"/>
         <Button id="btn8" text="Кнопка 8"/>
-        <Button id="btn9" text="Last button"/>
+        <Button id="btn9" text="Last button" width="min"/>
+    </Frame>
+
+    <Frame id="test" width="40%" height="min">
+        <Edit id="edit2" text="Second very very very long text to edit and test clipping" width="max"/>
     </Frame>
 </Frame>
