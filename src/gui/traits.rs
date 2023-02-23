@@ -37,6 +37,7 @@ pub trait View: Downcast {
     fn get_rect(&self) -> Rect<i32>;
     fn set_rect(&mut self, rect: Rect<i32>);
     fn get_padding(&self, scale: f64) -> Borders { Borders::default().scaled(scale) }
+    fn get_margin(&self, scale: f64) -> Borders { Borders::default().scaled(scale) }
     fn get_x(&self) -> i32 { self.get_rect().min.x }
     fn get_y(&self) -> i32 { self.get_rect().min.y }
     fn get_rect_width(&self) -> i32 { self.get_rect().width() }
@@ -57,15 +58,16 @@ pub trait View: Downcast {
     }
     fn calculate_size(&mut self, width: i32, height: i32, scale: f64) -> (i32, i32) {
         let (b_width, b_height) = self.get_bounds();
+        let margins = self.get_margin(scale);
         let width = match b_width {
             Dimension::Min => width, // TODO change this after all children layout themselves
-            Dimension::Max => width,
+            Dimension::Max => width - margins.left - margins.right,
             Dimension::Dip(dip) => (dip as f64 * scale).round() as i32,
             Dimension::Percent(p) => (width as f32 * p / 100f32).round() as i32
         };
         let height = match b_height {
             Dimension::Min => height, // TODO change this after all children layout themselves
-            Dimension::Max => height,
+            Dimension::Max => height - margins.top - margins.bottom,
             Dimension::Dip(dip) => (dip as f64 * scale).round() as i32,
             Dimension::Percent(p) => (height as f32 * p / 100f32).round() as i32
         };

@@ -56,12 +56,16 @@ impl<T> WindowHandler<T> for Win<T> {
 
     fn on_resize(&mut self, helper: &mut WindowHelper<T>, size_pixels: Vector2<u32>) {
         println!("on_resize");
-        if size_pixels.x > 0 && size_pixels.y > 0 {
-            self.width = size_pixels.x;
-            self.height = size_pixels.y;
-            self.ui.layout(size_pixels.x, size_pixels.y, helper.get_scale_factor());
-            helper.request_redraw();
+        if size_pixels.x == 0 || size_pixels.y == 0 {
+            return;
         }
+        if self.width == size_pixels.x && self.height == size_pixels.y {
+            return;
+        }
+        self.width = size_pixels.x;
+        self.height = size_pixels.y;
+        self.ui.layout(size_pixels.x, size_pixels.y, helper.get_scale_factor());
+        helper.request_redraw();
     }
 
     fn on_draw(&mut self, helper: &mut WindowHelper<T>, graphics: &mut Graphics2D) {

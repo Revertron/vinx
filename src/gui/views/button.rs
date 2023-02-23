@@ -25,9 +25,11 @@ pub struct Button {
 #[allow(dead_code)]
 impl Button {
     pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Button {
+        let mut main = FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min);
+        main.padding = Borders::with_padding(4);
         Button {
             state: RefCell::new(FieldsTexted {
-                main: FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min),
+                main,
                 text: text.to_owned(),
                 text_size,
                 line_height: 0f32,
@@ -113,6 +115,16 @@ impl View for Button {
             "top" => { self.set_y(value.parse().unwrap()) }
             "width" => { self.set_width(value.parse().unwrap()) }
             "height" => { self.set_height(value.parse().unwrap()) }
+            "padding" => { self.state.borrow_mut().main.padding.set_all(value.parse().unwrap_or(0)) }
+            "padding_top" => { self.state.borrow_mut().main.padding.top = value.parse().unwrap_or(0) }
+            "padding_left" => { self.state.borrow_mut().main.padding.left = value.parse().unwrap_or(0) }
+            "padding_right" => { self.state.borrow_mut().main.padding.right = value.parse().unwrap_or(0) }
+            "padding_bottom" => { self.state.borrow_mut().main.padding.bottom = value.parse().unwrap_or(0) }
+            "margin" => { self.state.borrow_mut().main.margin.set_all(value.parse().unwrap_or(0)) }
+            "margin_left" => { self.state.borrow_mut().main.margin.left = value.parse().unwrap_or(0) }
+            "margin_right" => { self.state.borrow_mut().main.margin.right = value.parse().unwrap_or(0) }
+            "margin_top" => { self.state.borrow_mut().main.margin.top = value.parse().unwrap_or(0) }
+            "margin_bottom" => { self.state.borrow_mut().main.margin.bottom = value.parse().unwrap_or(0) }
             "id" => { self.set_id(value) }
             "text" => { self.set_text(value) }
             "font" => { self.set_font(value) }
@@ -194,6 +206,10 @@ impl View for Button {
 
     fn get_padding(&self, scale: f64) -> Borders {
         self.state.borrow().main.padding.scaled(scale)
+    }
+
+    fn get_margin(&self, scale: f64) -> Borders {
+        self.state.borrow().main.margin.scaled(scale)
     }
 
     fn get_bounds(&self) -> (Dimension, Dimension) {

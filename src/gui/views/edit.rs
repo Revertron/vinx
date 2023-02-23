@@ -202,6 +202,16 @@ impl View for Edit {
             "top" => { self.set_y(value.parse().unwrap()) }
             "width" => { self.set_width(value.parse().unwrap()) }
             "height" => { self.set_height(value.parse().unwrap()) }
+            "padding" => { self.state.borrow_mut().main.padding.set_all(value.parse().unwrap_or(0)) }
+            "padding_top" => { self.state.borrow_mut().main.padding.top = value.parse().unwrap_or(0) }
+            "padding_left" => { self.state.borrow_mut().main.padding.left = value.parse().unwrap_or(0) }
+            "padding_right" => { self.state.borrow_mut().main.padding.right = value.parse().unwrap_or(0) }
+            "padding_bottom" => { self.state.borrow_mut().main.padding.bottom = value.parse().unwrap_or(0) }
+            "margin" => { self.state.borrow_mut().main.margin.set_all(value.parse().unwrap_or(0)) }
+            "margin_left" => { self.state.borrow_mut().main.margin.left = value.parse().unwrap_or(0) }
+            "margin_right" => { self.state.borrow_mut().main.margin.right = value.parse().unwrap_or(0) }
+            "margin_top" => { self.state.borrow_mut().main.margin.top = value.parse().unwrap_or(0) }
+            "margin_bottom" => { self.state.borrow_mut().main.margin.bottom = value.parse().unwrap_or(0) }
             "id" => { self.set_id(value) }
             "text" => { self.set_text(value) }
             "font" => { self.set_font(value) }
@@ -290,11 +300,14 @@ impl View for Edit {
             theme.draw_text((rect.min.x as f32 + scroll_x as f32).round(), (rect.min.y as f32 + y).round(), text);
         }
         theme.pop_clip();
-        let elapsed = self.caret_time.borrow().elapsed().as_millis();
-        if elapsed < 500 || elapsed % 1000 < 500 {
-            let mut caret_rect = self.get_caret_rect(state.main.scale);
-            caret_rect.move_by((scroll_x, 0));
-            theme.draw_edit_caret(caret_rect, state.main.state);
+        if state.main.state.focused {
+            let elapsed = self.caret_time.borrow().elapsed().as_millis();
+            if elapsed < 500 || elapsed % 1000 < 500 {
+                let mut caret_rect = self.get_caret_rect(state.main.scale);
+                caret_rect.move_by(origin);
+                caret_rect.move_by((scroll_x, 0));
+                theme.draw_edit_caret(caret_rect, state.main.state);
+            }
         }
     }
 
@@ -312,6 +325,10 @@ impl View for Edit {
 
     fn get_padding(&self, scale: f64) -> Borders {
         self.state.borrow().main.padding.scaled(scale)
+    }
+
+    fn get_margin(&self, scale: f64) -> Borders {
+        self.state.borrow().main.margin.scaled(scale)
     }
 
     fn get_bounds(&self) -> (Dimension, Dimension) {

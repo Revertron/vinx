@@ -26,6 +26,7 @@ pub struct FieldsMain {
     pub height: Dimension,
     pub rect: Rect<i32>,
     pub padding: Borders,
+    pub margin: Borders,
     pub scale: f64,
     pub id: String,
     pub state: ViewState,
@@ -44,6 +45,7 @@ impl FieldsMain {
             height,
             rect,
             padding: Borders::default(),
+            margin: Borders::default(),
             scale: 1.0,
             id: random_string(16),
             state: ViewState::default(),
@@ -85,6 +87,13 @@ impl Borders {
         Self { top: padding, left: padding, right: padding, bottom: padding }
     }
 
+    pub fn set_all(&mut self, padding: i32) {
+        self.top = padding;
+        self.left = padding;
+        self.right = padding;
+        self.bottom = padding;
+    }
+
     pub fn scaled(&self, scale: f64) -> Self {
         Self {
             top: (self.top as f64 * scale).ceil() as i32,
@@ -97,7 +106,7 @@ impl Borders {
 
 impl Default for Borders {
     fn default() -> Self {
-        Self::with_padding(4)
+        Self::with_padding(0)
     }
 }
 

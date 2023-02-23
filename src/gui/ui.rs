@@ -56,8 +56,10 @@ impl UI {
                 if root.borrow().get_id() == id {
                     return Some(Rc::clone(root));
                 }
-                println!("Searching inside root...");
-                root.borrow().as_container().unwrap().get_view(id)
+                if let Some(root) = root.borrow().as_container() {
+                    return root.get_view(id);
+                }
+                None
             }
         }
     }

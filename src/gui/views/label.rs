@@ -9,7 +9,7 @@ use gui::themes::{FontStyle, Theme, Typeface, ViewState};
 use gui::traits::{Container, Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
-use gui::views::Dimension;
+use gui::views::{Borders, Dimension};
 use styles::selector::FontSelector;
 use views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, FieldsMain, FieldsTexted};
 
@@ -86,6 +86,16 @@ impl View for Label {
             "top" => { self.set_y(value.parse().unwrap()) }
             "width" => { self.set_width(value.parse().unwrap()) }
             "height" => { self.set_height(value.parse().unwrap()) }
+            "padding" => { self.state.borrow_mut().main.padding.set_all(value.parse().unwrap_or(0)) }
+            "padding_top" => { self.state.borrow_mut().main.padding.top = value.parse().unwrap_or(0) }
+            "padding_left" => { self.state.borrow_mut().main.padding.left = value.parse().unwrap_or(0) }
+            "padding_right" => { self.state.borrow_mut().main.padding.right = value.parse().unwrap_or(0) }
+            "padding_bottom" => { self.state.borrow_mut().main.padding.bottom = value.parse().unwrap_or(0) }
+            "margin" => { self.state.borrow_mut().main.margin.set_all(value.parse().unwrap_or(0)) }
+            "margin_left" => { self.state.borrow_mut().main.margin.left = value.parse().unwrap_or(0) }
+            "margin_right" => { self.state.borrow_mut().main.margin.right = value.parse().unwrap_or(0) }
+            "margin_top" => { self.state.borrow_mut().main.margin.top = value.parse().unwrap_or(0) }
+            "margin_bottom" => { self.state.borrow_mut().main.margin.bottom = value.parse().unwrap_or(0) }
             "id" => { self.set_id(value) }
             "text" => { self.set_text(value) }
             "font" => { self.set_font(value) }
@@ -163,6 +173,14 @@ impl View for Label {
 
     fn set_rect(&mut self, rect: Rect<i32>) {
         self.state.borrow_mut().main.rect = rect;
+    }
+
+    fn get_padding(&self, scale: f64) -> Borders {
+        self.state.borrow().main.padding.scaled(scale)
+    }
+
+    fn get_margin(&self, scale: f64) -> Borders {
+        self.state.borrow().main.margin.scaled(scale)
     }
 
     fn get_bounds(&self) -> (Dimension, Dimension) {

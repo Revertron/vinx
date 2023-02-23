@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use speedy2d::dimen::Vector2;
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
+use gui::views::Borders;
 
 use themes::{FontStyle, Theme, Typeface, ViewState};
 use traits::{Container, Element, View, WeakElement};
@@ -103,7 +104,7 @@ impl Container for Frame {
     }
 
     fn get_view(&self, id: &str) -> Option<Element> {
-        println!("Searching View with id {}", &id);
+        println!("Searching {} in Frame {}", &id, &self.get_id());
         if let Some(found) = self.views.iter().find(|&view| view.borrow().get_id() == id) {
             return Some(Rc::clone(found));
         }
@@ -128,6 +129,16 @@ impl View for Frame {
             "top" => { self.set_y(value.parse().unwrap()) }
             "width" => { self.set_width(value.parse().unwrap()) }
             "height" => { self.set_height(value.parse().unwrap()) }
+            "padding" => { self.state.borrow_mut().padding.set_all(value.parse().unwrap_or(0)) }
+            "padding_top" => { self.state.borrow_mut().padding.top = value.parse().unwrap_or(0) }
+            "padding_left" => { self.state.borrow_mut().padding.left = value.parse().unwrap_or(0) }
+            "padding_right" => { self.state.borrow_mut().padding.right = value.parse().unwrap_or(0) }
+            "padding_bottom" => { self.state.borrow_mut().padding.bottom = value.parse().unwrap_or(0) }
+            "margin" => { self.state.borrow_mut().margin.set_all(value.parse().unwrap_or(0)) }
+            "margin_top" => { self.state.borrow_mut().margin.top = value.parse().unwrap_or(0) }
+            "margin_left" => { self.state.borrow_mut().margin.left = value.parse().unwrap_or(0) }
+            "margin_right" => { self.state.borrow_mut().margin.right = value.parse().unwrap_or(0) }
+            "margin_bottom" => { self.state.borrow_mut().margin.bottom = value.parse().unwrap_or(0) }
             "direction" => { self.set_direction(value.parse().unwrap()) }
             "id" => { self.set_id(value) }
             "font" => { self.set_font(value) }
@@ -155,6 +166,7 @@ impl View for Frame {
     }
 
     fn layout_content(&mut self, x: i32, y: i32, width: i32, height: i32, typeface: &Typeface, scale: f64) -> Rect<i32> {
+        self.state.borrow_mut().scale = scale;
         //println!("Laying out for {},{} - {},{}", x, y, width, height);
         let (new_width, new_height) = self.calculate_size(width, height, scale);
         //println!("New width {}, new height {}", new_width, new_height);
@@ -170,27 +182,28 @@ impl View for Frame {
         };
         for v in self.views.iter() {
             let mut v = v.try_borrow_mut().unwrap();
-            v.layout_content(xx, yy, new_width - xx - padding.right, new_height - yy - padding.bottom, &typeface, scale);
+            let margins = v.get_margin(scale);
+            v.layout_content(xx + margins.left, yy + margins.top, new_width - xx - padding.right, new_height - yy - padding.bottom, &typeface, scale);
             // Get maximum occupied area
             let (w, h) = v.calculate_full_size(scale);
             match self.direction {
-                Direction::Horizontal => xx = xx + w,
-                Direction::Vertical => yy = yy + h
+                Direction::Horizontal => xx = xx + w + margins.left + margins.right,
+                Direction::Vertical => yy = yy + h + margins.top + margins.bottom
             }
             if self.breaking && self.direction == Direction::Horizontal {
                 if xx > max_x {
-                    yy += max_height;
-                    xx = padding.left;
-                    v.layout_content(xx, yy, new_width - xx - padding.right, new_height - yy - padding.bottom, &typeface, scale);
+                    yy += max_height + margins.top;
+                    xx = padding.left + margins.left;
+                    v.layout_content(xx, yy + margins.top, new_width - xx - padding.right, new_height - yy - padding.bottom, &typeface, scale);
                     // Get maximum occupied area
                     let (w, h) = v.calculate_full_size(scale);
-                    xx = xx + w;
-                    max_height = h;
+                    xx += w;
+                    max_height = h + margins.bottom;
                 }
                 if v.is_break() {
                     let (_, h) = v.calculate_full_size(scale);
                     xx = padding.left;
-                    yy += h;
+                    yy += h + margins.bottom;
                 }
             }
             if h > max_height {
@@ -220,7 +233,6 @@ impl View for Frame {
         };
         let rect = rect((x, y), (x + width, y + height));
         self.set_rect(rect);
-        //println!("Frame {} sizes: {:?}", self.get_id(), &rect);
         rect
     }
 
@@ -257,28 +269,44 @@ impl View for Frame {
         self.state.borrow_mut().rect = rect;
     }
 
+    fn get_padding(&self, scale: f64) -> Borders {
+        self.state.borrow().padding.scaled(scale)
+    }
+
+    fn get_margin(&self, scale: f64) -> Borders {
+        self.state.borrow().margin.scaled(scale)
+    }
+
     fn get_bounds(&self) -> (Dimension, Dimension) {
         let state = self.state.borrow();
         (state.width, state.height)
     }
 
     fn get_content_size(&self) -> (i32, i32) {
+        let scale = self.state.borrow().scale;
         let mut rect = rect((-1, -1), (0, 0));
         for v in self.views.iter() {
             let mut v = v.borrow();
             // Get maximum occupied area
             let view_rect = v.get_rect();
+            let margins = v.get_margin(scale);
             if rect.min.x == -1 || view_rect.min.x < rect.min.x {
                 rect.min.x = view_rect.min.x;
+                if margins.left != 0 {
+                    rect.min.x -= margins.left;
+                }
             }
             if rect.min.y == -1 || view_rect.min.y < rect.min.y {
                 rect.min.y = view_rect.min.y;
+                if margins.top != 0 {
+                    rect.min.y -= margins.top;
+                }
             }
-            if view_rect.max.x > rect.max.x {
-                rect.max.x = view_rect.max.x;
+            if view_rect.max.x + margins.right > rect.max.x {
+                rect.max.x = view_rect.max.x + margins.right;
             }
-            if view_rect.max.y > rect.max.y {
-                rect.max.y = view_rect.max.y;
+            if view_rect.max.y + margins.bottom > rect.max.y {
+                rect.max.y = view_rect.max.y + margins.bottom;
             }
         }
         (rect.width(), rect.height())
