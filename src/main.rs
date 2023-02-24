@@ -11,12 +11,13 @@ use speedy2d::Window;
 use speedy2d::window::{WindowCreationOptions, WindowPosition, WindowSize};
 
 use gui::*;
+use gui::events::EventType;
 use gui::themes::Theme;
 use gui::ui::UI;
 use gui::win::{Win, WinEvent};
 use themes::Classic;
 use traits::View;
-use views::{Button, Edit};
+use views::{Button, Edit, CheckBox};
 
 mod gui;
 #[cfg(tests)]
@@ -31,7 +32,7 @@ fn main() {
     let ui = UI::from_xml(layout, WIDTH, HEIGHT, Classic::typeface()).unwrap();
 
     if let Some(button) = ui.get_view("btn1") {
-        button.borrow_mut().onclick(Box::new(button1_click));
+        button.borrow_mut().on_event(EventType::Click, Box::new(button1_click));
     }
 
     let window_size = WindowSize::PhysicalPixels(Vector2::new(WIDTH, HEIGHT));
@@ -43,10 +44,17 @@ fn main() {
 }
 
 fn button1_click(ui: &mut UI, view: &dyn View) -> bool {
+    let mut checked = false;
+    if let Some(checkbox) = ui.get_view("checkbox1") {
+        if let Some(ch) = checkbox.borrow_mut().downcast_mut::<CheckBox>() {
+            checked = ch.is_checked();
+        }
+    }
+
     // Change something in another view
     if let Some(edit) = ui.get_view("edit1") {
         if let Some(e) = edit.borrow_mut().downcast_mut::<Edit>() {
-            e.set_text("Text changed from button click!");
+            e.set_text(&format!("CheckBox checked = {}", checked));
         }
     }
     // Change something in clicked view

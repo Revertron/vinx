@@ -14,7 +14,7 @@ mod tests {
         ui.paint(&mut theme);
 
         if let Some(button) = ui.get_view("btn1") {
-            button.borrow_mut().onclick(Box::new(button1_click));
+            button.borrow_mut().on_event(EventType::Click, Box::new(button1_click));
             if button.borrow_mut().click(&mut ui) {
                 println!("Click processed");
             }

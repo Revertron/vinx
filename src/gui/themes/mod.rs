@@ -19,6 +19,8 @@ pub trait Theme {
     fn draw_edit_back(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_edit_body(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_edit_caret(&mut self, rect: Rect<i32>, state: ViewState);
+    fn draw_checkbox_back(&mut self, rect: Rect<i32>, state: ViewState);
+    fn draw_checkbox_body(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_panel_back(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_panel_body(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_text(&mut self, x: f32, y: f32, text: &Rc<FormattedTextBlock>);

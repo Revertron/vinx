@@ -169,6 +169,23 @@ impl<'h> Theme for Classic<'h> {
         self.graphics.draw_rectangle(Rectangle::new(top_left, bottom_right), color);
     }
 
+    fn draw_checkbox_back(&mut self, rect: Rect<i32>, state: ViewState) {
+        self.draw_edit_back(rect, state);
+    }
+
+    fn draw_checkbox_body(&mut self, rect: Rect<i32>, state: ViewState) {
+        self.draw_edit_body(rect, state);
+        if state.checked {
+            let top_left = Vector2::new(rect.min.x as f32 + self.scale as f32 * 3.0, rect.min.y as f32 + self.scale as f32 * 3.0);
+            let bottom_right = Vector2::new(rect.max.x as f32 - self.scale as f32 * 3.0, rect.max.y as f32 - self.scale as f32 * 3.0);
+            let width = bottom_right.x - top_left.x;
+            let height = bottom_right.y - top_left.y;
+            let color = Color::from_hex_rgb(Classic::BLACK);
+            self.graphics.draw_line((top_left.x, top_left.y + height / 2f32), (top_left.x + width / 3f32, bottom_right.y - height / 8f32), self.scale as f32, color);
+            self.graphics.draw_line((top_left.x + width / 3f32, bottom_right.y - height / 8f32), (bottom_right.x, top_left.y + height / 8f32), self.scale as f32, color);
+        }
+    }
+
     #[allow(unused)]
     fn draw_panel_back(&mut self, rect: Rect<i32>, state: ViewState) {
         let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);

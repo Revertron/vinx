@@ -15,7 +15,7 @@ use gui::types::Point;
 use themes::Typeface;
 use types::{Rect, rect};
 
-use views::{Button, Edit, Label};
+use views::{Button, Edit, Label, CheckBox};
 
 pub struct UI {
     width: u32,
@@ -31,6 +31,7 @@ impl UI {
         let mut ui = UI { width, height, typeface, root: None, types: HashMap::new() };
         ui.register::<Label>("Label");
         ui.register::<Button>("Button");
+        ui.register::<CheckBox>("CheckBox");
         ui.register::<Edit>("Edit");
         ui.register::<Frame>("Frame");
         ui

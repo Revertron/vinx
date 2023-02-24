@@ -3,6 +3,7 @@ use std::rc::{Rc, Weak};
 use downcast_rs::Downcast;
 use speedy2d::dimen::Vector2;
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
+use gui::events::EventType;
 use gui::ui::UI;
 use gui::themes::{Theme, ViewState};
 use gui::types::{Rect, Point};
@@ -87,11 +88,11 @@ pub trait View: Downcast {
     fn set_height(&mut self, height: Dimension);
     fn set_id(&mut self, id: &str);
     fn get_id(&self) -> String;
-    fn as_container(&self) -> Option<&dyn Container>;
-    fn as_container_mut(&mut self) -> Option<&mut dyn Container>;
+    fn as_container(&self) -> Option<&dyn Container> { None }
+    fn as_container_mut(&mut self) -> Option<&mut dyn Container> { None }
 
     // Events and listeners
-    fn onclick(&mut self, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>);
+    fn on_event(&mut self, event: EventType, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>);
     fn click(&self, ui: &mut UI) -> bool;
 
     #[allow(unused_variables)]

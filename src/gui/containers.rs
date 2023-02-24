@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use speedy2d::dimen::Vector2;
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
+use gui::events::EventType;
 use gui::views::Borders;
 
 use themes::{FontStyle, Theme, Typeface, ViewState};
@@ -358,8 +359,8 @@ impl View for Frame {
         Some(self as &mut dyn Container)
     }
 
-    fn onclick(&mut self, _func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>) {
-        // No op
+    fn on_event(&mut self, _event: EventType, _func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>) {
+        // No op for now
     }
 
     fn click(&self, _ui: &mut UI) -> bool {

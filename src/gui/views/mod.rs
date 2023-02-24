@@ -1,6 +1,7 @@
 pub mod label;
 pub mod button;
 pub mod edit;
+pub mod checkbox;
 
 use gui::themes::{Typeface, ViewState};
 use gui::traits::{View, WeakElement};
@@ -10,12 +11,13 @@ use speedy2d::font::FormattedTextBlock;
 use std::collections::HashMap;
 use std::str::FromStr;
 use gui::common::random_string;
-use gui::events::UiEvent;
+use gui::events::EventType;
 use gui::ui::UI;
 use styles::selector::{BackSelector, FontSelector};
 pub use self::label::Label;
 pub use self::button::Button;
 pub use self::edit::Edit;
+pub use self::checkbox::CheckBox;
 
 pub const BUTTON_MIN_WIDTH: i32 = 80;
 pub const BUTTON_MIN_HEIGHT: i32 = 24;
@@ -66,7 +68,7 @@ pub struct FieldsTexted {
     pub single_line: bool,
     pub cached_text: Option<Rc<FormattedTextBlock>>,
     pub foreground: FontSelector,
-    pub listeners: HashMap<UiEvent, Box<dyn FnMut(&mut UI, &dyn View) -> bool>>
+    pub listeners: HashMap<EventType, Box<dyn FnMut(&mut UI, &dyn View) -> bool>>
 }
 
 /// Represents padding (inner spaces) or margin (outer spaces) of any element.

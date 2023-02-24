@@ -7,7 +7,7 @@ use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
 
 use assets::get_font;
-use events::UiEvent;
+use events::EventType;
 use gui;
 use gui::common::{delete_char, insert_char};
 use gui::views::Borders;
@@ -379,22 +379,14 @@ impl View for Edit {
         self.state.borrow().main.id.clone()
     }
 
-    fn as_container(&self) -> Option<&dyn Container> {
-        None
-    }
-
-    fn as_container_mut(&mut self) -> Option<&mut dyn Container> {
-        None
-    }
-
-    fn onclick(&mut self, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>) {
-        self.state.borrow_mut().listeners.insert(UiEvent::Click, func);
+    fn on_event(&mut self, event: EventType, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>) {
+        self.state.borrow_mut().listeners.insert(event, func);
     }
 
     fn click(&self, ui: &mut UI) -> bool {
-        if let Some(mut click) = self.state.borrow_mut().listeners.remove(&UiEvent::Click) {
+        if let Some(mut click) = self.state.borrow_mut().listeners.remove(&EventType::Click) {
             let result = click(ui, self as &dyn View);
-            self.state.borrow_mut().listeners.insert(UiEvent::Click, click);
+            self.state.borrow_mut().listeners.insert(EventType::Click, click);
             return result;
         }
         false

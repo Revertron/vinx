@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
 use assets::get_font;
+use gui::events::EventType;
 
 use gui::themes::{FontStyle, Theme, Typeface, ViewState};
 use gui::traits::{Container, Element, View, WeakElement};
@@ -220,16 +221,8 @@ impl View for Label {
         self.state.borrow().main.id.clone()
     }
 
-    fn as_container(&self) -> Option<&dyn Container> {
-        None
-    }
-
-    fn as_container_mut(&mut self) -> Option<&mut dyn Container> {
-        None
-    }
-
-    fn onclick(&mut self, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>) {
-        todo!()
+    fn on_event(&mut self, event: EventType, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>) {
+        self.state.borrow_mut().listeners.insert(event, func);
     }
 
     fn click(&self, ui: &mut UI) -> bool {

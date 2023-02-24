@@ -18,16 +18,19 @@ use styles::selector::FontSelector;
 use views::{FieldsMain, FieldsTexted};
 use crate::gui::views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH};
 
-pub struct Button {
-    state: RefCell<FieldsTexted>
+pub struct CheckBox {
+    state: RefCell<FieldsTexted>,
+    text_margin: i32
 }
 
+const DEFAULT_TEXT_MARGIN: i32 = 6;
+const DEFAULT_BOX_SIZE: i32 = 16;
+
 #[allow(dead_code)]
-impl Button {
-    pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> Button {
-        let mut main = FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min);
-        main.padding = Borders::with_padding(4);
-        Button {
+impl CheckBox {
+    pub fn new(rect: Rect<i32>, text: &str, text_size: f32) -> CheckBox {
+        let main = FieldsMain::with_rect(rect, Dimension::Min, Dimension::Min);
+        CheckBox {
             state: RefCell::new(FieldsTexted {
                 main,
                 text: text.to_owned(),
@@ -37,7 +40,8 @@ impl Button {
                 cached_text: None,
                 foreground: FontSelector::new(),
                 listeners: HashMap::new()
-            })
+            }),
+            text_margin: DEFAULT_TEXT_MARGIN
         }
     }
 
@@ -51,6 +55,14 @@ impl Button {
         let scale = self.state.borrow().main.scale;
         let single_line = self.state.borrow().single_line;
         self.layout_text(self.get_rect_width(), single_line, scale);
+    }
+
+    pub fn is_checked(&self) -> bool {
+        self.state.borrow().main.state.checked
+    }
+
+    pub fn set_checked(&self, checked: bool) {
+        self.state.borrow_mut().main.state.checked = checked;
     }
 
     fn get_typeface(&self, parent_typeface: &Typeface) -> Typeface {
@@ -96,9 +108,13 @@ impl Button {
         let typeface = self.state.borrow().main.typeface.clone();
         if let Some(typeface) = typeface {
             if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
+                let scale = scale.round() as i32;
+                let box_size = DEFAULT_BOX_SIZE * scale;
+                let text_margin = self.text_margin * scale;
+                let width = max_width - box_size - text_margin;
                 let options = match single_line {
                     true => TextOptions::new(),
-                    false => TextOptions::new().with_wrap_to_width(max_width as f32, TextAlignment::Left)
+                    false => TextOptions::new().with_wrap_to_width(width as f32, TextAlignment::Left)
                 };
                 let size = self.state.borrow().text_size * scale as f32;
                 let text = font.layout_text(&self.state.borrow().text, size, options);
@@ -108,7 +124,7 @@ impl Button {
     }
 }
 
-impl View for Button {
+impl View for CheckBox {
     fn set_any(&mut self, name: &str, value: &str) {
         match name {
             "left" => { self.set_x(value.parse().unwrap()) }
@@ -158,7 +174,9 @@ impl View for Button {
         let padding = self.get_padding(scale);
         let horizontal = padding.left + padding.right;
         let vertical = padding.top + padding.bottom;
-        let (new_width, _new_height) = self.calculate_size(width.max(BUTTON_MIN_WIDTH) - horizontal, height.max(BUTTON_MIN_HEIGHT) - vertical, scale);
+        let max_width = width.max(DEFAULT_BOX_SIZE) - horizontal;
+        let max_height = height.max(DEFAULT_BOX_SIZE) - vertical;
+        let (new_width, _new_height) = self.calculate_size(max_width, max_height, scale);
         let single_line = self.state.borrow().single_line;
         self.layout_text(new_width, single_line, scale);
         let (width, height) = self.calculate_full_size(scale);
@@ -177,17 +195,20 @@ impl View for Button {
 
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
         let state = self.state.borrow();
+        let box_size = DEFAULT_BOX_SIZE * state.main.scale.round() as i32;
         let mut rect = state.main.rect;
         rect.move_by(origin);
         theme.push_clip();
         theme.clip_rect(rect);
-        theme.draw_button_back(rect, state.main.state);
-        theme.draw_button_body(rect, state.main.state);
+        let box_y = (self.get_rect_height() - box_size) / 2;
+        let box_rect = super::super::types::rect((rect.min.x, rect.min.y + box_y), (rect.min.x + box_size, rect.min.y + box_y + box_size));
+        theme.draw_checkbox_back(box_rect, state.main.state);
+        theme.draw_checkbox_body(box_rect, state.main.state);
         // TODO use padding
         if let Some(text) = &state.cached_text {
-            let x = (self.get_rect_width() as f32 - text.width()) / 2f32;
+            let x = (rect.min.x as f32 + box_size as f32 + self.text_margin as f32 * state.main.scale as f32) as f32;
             let y = (self.get_rect_height() as f32 - text.height()) / 2f32;
-            theme.draw_text((rect.min.x as f32 + x).round(), (rect.min.y as f32 + y).round(), text);
+            theme.draw_text(x.round(), (rect.min.y as f32 + y).round(), text);
         }
         theme.pop_clip();
     }
@@ -219,11 +240,14 @@ impl View for Button {
 
     fn get_content_size(&self) -> (i32, i32) {
         let state = self.state.borrow();
+        let scale = state.main.scale.round() as i32;
+        let box_size = DEFAULT_BOX_SIZE * scale;
+        let text_margin = self.text_margin * scale;
         match &state.cached_text {
-            None => (BUTTON_MIN_WIDTH, BUTTON_MIN_HEIGHT),
+            None => (box_size, box_size),
             Some(text) => {
-                let width = max(text.width().ceil() as i32, BUTTON_MIN_WIDTH);
-                let height = max(text.height().ceil() as i32, BUTTON_MIN_HEIGHT);
+                let width = text.width().ceil() as i32 + box_size + text_margin;
+                let height = max(text.height().ceil() as i32, box_size / 2);
                 (width, height)
             }
         }
@@ -262,6 +286,8 @@ impl View for Button {
     }
 
     fn click(&self, ui: &mut UI) -> bool {
+        let checked = self.state.borrow().main.state.checked;
+        self.state.borrow_mut().main.state.checked = !checked;
         let listener = self.state.borrow_mut().listeners.remove(&EventType::Click);
         if let Some(mut click) = listener {
             let result = click(ui, self as &dyn View);
@@ -296,10 +322,7 @@ impl View for Button {
         if matches!(button, MouseButton::Left) {
             if self.state.borrow().main.state.pressed {
                 if hit {
-                    println!("Doing click!");
                     self.click(ui);
-                } else {
-                    println!("Cancelled click");
                 }
                 let mut state = self.state.borrow_mut();
                 state.main.state.pressed = false;
@@ -310,9 +333,9 @@ impl View for Button {
     }
 }
 
-impl Default for Button {
+impl Default for CheckBox {
     fn default() -> Self {
         let rect = rect((0, 0), (60, 24));
-        Button::new(rect, "", 24_f32)
+        CheckBox::new(rect, "", 24_f32)
     }
 }
