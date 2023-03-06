@@ -3,14 +3,14 @@ use std::rc::Rc;
 
 use speedy2d::dimen::Vector2;
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
-use gui::events::EventType;
-use gui::views::Borders;
+use super::events::EventType;
+use super::views::Borders;
 
-use themes::{FontStyle, Theme, Typeface, ViewState};
-use traits::{Container, Element, View, WeakElement};
-use types::{Point, Rect, rect};
-use ui::UI;
-use views::{Dimension, Direction, FieldsMain};
+use super::themes::{FontStyle, Theme, Typeface, ViewState};
+use super::traits::{Container, Element, View, WeakElement};
+use super::types::{Point, Rect, rect};
+use super::ui::UI;
+use super::views::{Dimension, Direction, FieldsMain};
 
 pub struct Frame {
     state: RefCell<FieldsMain>,

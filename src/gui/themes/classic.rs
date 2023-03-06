@@ -10,8 +10,8 @@ use gui::styles::selector::{DrawState, MainSelector};
 use gui::themes::{Theme, Typeface, ViewState};
 use gui::themes::utils::draw_dashed_rectangle;
 use gui::types::Rect;
-use types;
-use types::rect;
+use gui::types;
+use gui::types::rect;
 
 #[allow(unused)]
 pub struct Classic<'h> {

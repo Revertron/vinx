@@ -8,13 +8,13 @@ use quick_xml::Reader;
 use speedy2d::dimen::Vector2;
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
 
-use gui::containers::Frame;
-use gui::themes::Theme;
-use gui::traits::{Element, View};
-use gui::types::Point;
-use themes::Typeface;
+use super::containers::Frame;
+use super::themes::Theme;
+use super::traits::{Element, View};
+use super::types::Point;
+use super::themes::Typeface;
 
-use views::{Button, Edit, Label, CheckBox, List};
+use super::views::{Button, Edit, Label, CheckBox, List};
 
 pub struct UI {
     width: u32,

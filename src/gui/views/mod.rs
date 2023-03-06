@@ -15,7 +15,7 @@ use std::str::FromStr;
 use gui::common::random_string;
 use gui::events::EventType;
 use gui::ui::UI;
-use styles::selector::{MainSelector, FontSelector};
+use super::styles::selector::{MainSelector, FontSelector};
 pub use self::label::Label;
 pub use self::button::Button;
 pub use self::edit::Edit;

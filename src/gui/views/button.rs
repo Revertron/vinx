@@ -6,17 +6,17 @@ use speedy2d::dimen::Vector2;
 use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
 use speedy2d::window::MouseButton;
 
-use assets::get_font;
-use events::EventType;
-use gui::common::DEFAULT_TEXT_SIZE;
-use gui::themes::{FontStyle, Theme, Typeface, ViewState};
-use gui::traits::{Element, View, WeakElement};
-use gui::types::{Point, Rect, rect};
-use gui::ui::UI;
-use gui::views::{Borders, Dimension};
-use styles::selector::FontSelector;
-use views::{FieldsMain, FieldsTexted};
-use crate::gui::views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH};
+use crate::gui::assets::get_font;
+use crate::gui::events::EventType;
+use crate::gui::common::DEFAULT_TEXT_SIZE;
+use crate::gui::themes::{FontStyle, Theme, Typeface, ViewState};
+use crate::gui::traits::{Element, View, WeakElement};
+use crate::gui::types::{Point, Rect, rect};
+use crate::gui::ui::UI;
+use crate::gui::views::{Borders, Dimension};
+use crate::gui::styles::selector::FontSelector;
+use crate::gui::views::{FieldsMain, FieldsTexted};
+use super::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH};
 
 pub struct Button {
     state: RefCell<FieldsTexted>

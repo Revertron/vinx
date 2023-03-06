@@ -3,12 +3,12 @@ use std::rc::{Rc, Weak};
 use downcast_rs::Downcast;
 use speedy2d::dimen::Vector2;
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
-use gui::events::EventType;
-use gui::ui::UI;
-use gui::themes::{Theme, ViewState};
-use gui::types::{Rect, Point};
-use themes::Typeface;
-use views::{Borders, Dimension};
+use super::events::EventType;
+use super::ui::UI;
+use super::themes::{Theme, ViewState};
+use super::types::{Rect, Point};
+use super::themes::Typeface;
+use super::views::{Borders, Dimension};
 
 pub type Element = Rc<RefCell<dyn View>>;
 pub type WeakElement = Weak<RefCell<dyn View>>;

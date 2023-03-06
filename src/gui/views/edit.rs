@@ -6,17 +6,17 @@ use speedy2d::dimen::Vector2;
 use speedy2d::font::{TextLayout, TextOptions};
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
 
-use assets::get_font;
-use events::EventType;
-use gui;
-use gui::common::{delete_char, insert_char};
-use gui::views::Borders;
-use styles::selector::FontSelector;
-use themes::{FontStyle, Theme, Typeface, ViewState};
-use traits::{Element, View, WeakElement};
-use types::{Point, Rect, rect};
-use ui::UI;
-use views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, Dimension, FieldsMain, FieldsTexted};
+use crate::gui::assets::get_font;
+use crate::gui::events::EventType;
+use crate::gui;
+use crate::gui::common::{delete_char, insert_char};
+use crate::gui::views::Borders;
+use crate::gui::styles::selector::FontSelector;
+use crate::gui::themes::{FontStyle, Theme, Typeface, ViewState};
+use crate::gui::traits::{Element, View, WeakElement};
+use crate::gui::types::{Point, Rect, rect};
+use crate::gui::ui::UI;
+use super::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, Dimension, FieldsMain, FieldsTexted};
 
 pub struct Edit {
     state: RefCell<FieldsTexted>,

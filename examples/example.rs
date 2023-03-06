@@ -1,31 +1,22 @@
 #![windows_subsystem = "windows"]
-#[macro_use]
-extern crate downcast_rs;
-extern crate include_dir;
-extern crate quick_xml;
-extern crate speedy2d;
-extern crate rand;
 
-use std::cell::RefCell;
-use std::rc::Rc;
+extern crate speedy2d;
+extern crate vinx;
+
 use speedy2d::dimen::Vector2;
 use speedy2d::Window;
 use speedy2d::window::{WindowCreationOptions, WindowPosition, WindowSize};
 
-use gui::*;
-use gui::events::EventType;
-use gui::themes::Theme;
-use gui::traits::Element;
-use gui::ui::UI;
-use gui::views::{Dimension, Label, List};
-use gui::win::{Win, WinEvent};
-use themes::Classic;
-use traits::View;
-use views::{Button, Edit, CheckBox};
-
-mod gui;
-#[cfg(tests)]
-mod tests;
+use vinx::gui::*;
+use vinx::gui::events::EventType;
+use vinx::gui::themes::Theme;
+use vinx::gui::traits::Element;
+use vinx::gui::ui::UI;
+use vinx::gui::views::{Dimension, Label, List};
+use vinx::gui::win::{Win, WinEvent};
+use vinx::gui::themes::Classic;
+use vinx::gui::traits::View;
+use vinx::gui::views::{Button, Edit, CheckBox};
 
 const WIDTH: u32 = 1920;
 const HEIGHT: u32 = 1080;

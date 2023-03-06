@@ -4,7 +4,7 @@ mod utils;
 use std::rc::Rc;
 use speedy2d::font::FormattedTextBlock;
 use gui::styles::selector::MainSelector;
-pub use themes::classic::Classic;
+pub use super::themes::classic::Classic;
 use gui::types::Rect;
 
 pub trait Theme {

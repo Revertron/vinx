@@ -3,16 +3,16 @@ use std::cmp::max;
 use std::collections::HashMap;
 
 use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
-use assets::get_font;
-use gui::events::EventType;
+use crate::gui::assets::get_font;
+use crate::gui::events::EventType;
 
-use gui::themes::{FontStyle, Theme, Typeface, ViewState};
-use gui::traits::{Element, View, WeakElement};
-use gui::types::{Point, Rect, rect};
-use gui::ui::UI;
-use gui::views::{Borders, Dimension};
-use styles::selector::FontSelector;
-use views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, FieldsMain, FieldsTexted};
+use crate::gui::themes::{FontStyle, Theme, Typeface, ViewState};
+use crate::gui::traits::{Element, View, WeakElement};
+use crate::gui::types::{Point, Rect, rect};
+use crate::gui::ui::UI;
+use crate::gui::views::{Borders, Dimension};
+use crate::gui::styles::selector::FontSelector;
+use crate::gui::views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, FieldsMain, FieldsTexted};
 
 pub struct Label {
     state: RefCell<FieldsTexted>
