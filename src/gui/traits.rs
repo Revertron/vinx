@@ -97,6 +97,7 @@ pub trait View: Downcast {
     // Events and listeners
     fn on_event(&mut self, event: EventType, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>);
     fn click(&self, ui: &mut UI) -> bool;
+    #[allow(unused_variables)]
     fn update(&mut self, ui: &mut UI) -> bool { false }
 
     #[allow(unused_variables)]

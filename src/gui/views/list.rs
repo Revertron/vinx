@@ -10,14 +10,13 @@ use gui::themes::{Theme, Typeface, ViewState};
 use gui::traits::{Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
-use gui::views::{Borders, Dimension, Direction, FieldsMain};
+use gui::views::{Borders, Dimension, FieldsMain};
 
 pub struct List {
     state: RefCell<FieldsMain>,
     items: RefCell<Vec<String>>,
     texts: RefCell<Vec<Option<Rc<FormattedTextBlock>>>>,
     text_size: f32,
-    items_focusable: bool,
     scroll_y: RefCell<i32>,
     selected: RefCell<Option<usize>>
 }
@@ -29,7 +28,6 @@ impl List {
             items: RefCell::new(vec![]),
             texts: RefCell::new(vec![]),
             text_size: DEFAULT_TEXT_SIZE,
-            items_focusable: true,
             scroll_y: RefCell::new(0),
             selected: RefCell::new(None)
         }
@@ -38,20 +36,14 @@ impl List {
     pub fn set_items(&mut self, items: Vec<String>) {
         self.items = RefCell::new(items);
         self.texts.borrow_mut().clear();
-        let mut y = 0;
         let typeface = self.state.borrow().typeface.clone().unwrap();
         let scale = self.state.borrow().scale as f32;
         for i in self.items.borrow().iter() {
-            let height = if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
+            if let Some(font) = get_font(&typeface.font_name, &typeface.font_style.to_string()) {
                 let options = TextOptions::new();
                 let text = font.layout_text(&i, self.text_size * scale, options);
-                let height = text.height();
                 self.texts.borrow_mut().push(Some(text));
-                height.ceil() as i32
-            } else {
-                DEFAULT_TEXT_SIZE as i32
-            };
-            y += height;
+            }
         }
     }
 
@@ -95,7 +87,7 @@ impl List {
                 if delta < 0 {
                     *self.scroll_y.borrow_mut() += delta;
                 } else if yy + scroll_y < 0 {
-                    *self.scroll_y.borrow_mut() -= (yy + scroll_y);
+                    *self.scroll_y.borrow_mut() -= yy + scroll_y;
                 }
                 yy += height;
             }
@@ -177,7 +169,6 @@ impl View for List {
 
     fn paint(&self, origin: Point<i32>, theme: &mut dyn Theme) {
         let mut rect = self.get_rect();
-        let start = rect.min + origin;
         rect.move_by(origin);
         theme.push_clip();
         theme.clip_rect(rect);
@@ -194,7 +185,7 @@ impl View for List {
                 let mut text_color: u32 = 0xff000000;
                 if let Some(s) = selected {
                     if s == index {
-                        let mut rect = super::super::types::rect((rect.min.x + 2, (y + scroll_y)), (rect.max.x - 2, (y + scroll_y) + text_height));
+                        let rect = super::super::types::rect((rect.min.x + 2, (y + scroll_y)), (rect.max.x - 2, (y + scroll_y) + text_height));
                         theme.draw_rect(rect, 0xff0000C0);
                         text_color = 0xffffffff;
                     }
@@ -312,7 +303,7 @@ impl View for List {
         false
     }
 
-    fn on_key_down(&self, _ui: &mut UI, virtual_key_code: Option<VirtualKeyCode>, scancode: KeyScancode, state: ModifiersState) -> bool {
+    fn on_key_down(&self, _ui: &mut UI, virtual_key_code: Option<VirtualKeyCode>, _scancode: KeyScancode, _state: ModifiersState) -> bool {
         if let Some(code) = virtual_key_code {
             if !self.state.borrow().state.focused || code == VirtualKeyCode::Tab {
                 return false;
