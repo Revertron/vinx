@@ -6,13 +6,14 @@ use speedy2d::dimen::Vector2;
 use speedy2d::font::FormattedTextBlock;
 use speedy2d::Graphics2D;
 use speedy2d::shape::Rectangle;
-use gui::common::get_utc_time;
+use gui::styles::selector::{DrawState, MainSelector};
 use gui::themes::{Theme, Typeface, ViewState};
-use gui::themes::utils::{draw_dashed_rectangle, draw_rounded_rectangle};
+use gui::themes::utils::draw_dashed_rectangle;
 use gui::types::Rect;
 use types;
 use types::rect;
 
+#[allow(unused)]
 pub struct Classic<'h> {
     graphics: &'h mut Graphics2D,
     width: i32,
@@ -46,6 +47,31 @@ impl<'h> Theme for Classic<'h> {
 
     fn typeface() -> Typeface {
         Typeface::default()
+    }
+
+    fn get_back_color(&self, state: ViewState, selector: &MainSelector) -> u32 {
+        if let Some(s) = selector.get_state(&state) {
+            match s {
+                DrawState::Transparent => return 0x00000000,
+                DrawState::Color(c) => return *c,
+                _ => {}
+            }
+        }
+        Classic::BACKGROUND
+    }
+
+    fn get_text_color(&self, state: ViewState, selector: &MainSelector) -> u32 {
+        if let Some(s) = selector.get_state(&state) {
+            match s {
+                DrawState::Transparent => return 0x00000000,
+                DrawState::Color(c) => return *c,
+                _ => {}
+            }
+        }
+        if !state.enabled {
+            return 0xff202020;
+        }
+        0xff000000
     }
 
     fn set_clip(&mut self, rect: Rect<i32>) {
@@ -157,6 +183,9 @@ impl<'h> Theme for Classic<'h> {
         let color = Color::from_hex_rgb(Classic::BACKGROUND);
         self.graphics.draw_line((top_left.x + border, bottom_right.y - border - border_half), (bottom_right.x - border, bottom_right.y - border - border_half), border, color);
         self.graphics.draw_line((bottom_right.x - border - border_half, top_left.y + border), (bottom_right.x - border - border_half, bottom_right.y - border), border, color);
+
+        let color = Color::from_hex_rgb(0xffffff);
+        self.graphics.draw_line((top_left.x + border, bottom_right.y - border_half), (bottom_right.x - border, bottom_right.y - border_half), border, color);
     }
 
     fn draw_edit_caret(&mut self, rect: Rect<i32>, state: ViewState) {
@@ -186,6 +215,14 @@ impl<'h> Theme for Classic<'h> {
         }
     }
 
+    fn draw_list_back(&mut self, rect: Rect<i32>, state: ViewState) {
+        self.draw_edit_back(rect, state);
+    }
+
+    fn draw_list_body(&mut self, rect: Rect<i32>, state: ViewState) {
+        self.draw_edit_body(rect, state);
+    }
+
     #[allow(unused)]
     fn draw_panel_back(&mut self, rect: Rect<i32>, state: ViewState) {
         let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);
@@ -208,7 +245,15 @@ impl<'h> Theme for Classic<'h> {
         self.graphics.draw_line((bottom_right.x - half, top_left.y + border + half), (bottom_right.x - half, bottom_right.y + border - half), border, color);
     }
 
-    fn draw_text(&mut self, x: f32, y: f32, text: &Rc<FormattedTextBlock>) {
-        self.graphics.draw_text((x, y), Color::BLACK, text);
+    fn draw_text(&mut self, x: f32, y: f32, color: u32, text: &Rc<FormattedTextBlock>) {
+        let color = Color::from_hex_rgb(color);
+        self.graphics.draw_text((x, y), color, text);
+    }
+
+    fn draw_rect(&mut self, rect: Rect<i32>, color: u32) {
+        let top_left = Vector2::new(rect.min.x as f32, rect.min.y as f32);
+        let bottom_right = Vector2::new(rect.max.x as f32, rect.max.y as f32);
+        let color = Color::from_hex_argb(color);
+        self.graphics.draw_rectangle(Rectangle::new(top_left, bottom_right), color);
     }
 }

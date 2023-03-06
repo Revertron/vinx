@@ -3,12 +3,15 @@ mod utils;
 
 use std::rc::Rc;
 use speedy2d::font::FormattedTextBlock;
+use gui::styles::selector::MainSelector;
 pub use themes::classic::Classic;
 use gui::types::Rect;
 
 pub trait Theme {
     fn clear_screen(&mut self);
     fn typeface() -> Typeface where Self: Sized;
+    fn get_back_color(&self, state: ViewState, selector: &MainSelector) -> u32;
+    fn get_text_color(&self, state: ViewState, selector: &MainSelector) -> u32;
     fn set_clip(&mut self, rect: Rect<i32>);
     fn clip_rect(&mut self, rect: Rect<i32>) -> Rect<i32>;
     fn push_clip(&mut self);
@@ -21,9 +24,12 @@ pub trait Theme {
     fn draw_edit_caret(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_checkbox_back(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_checkbox_body(&mut self, rect: Rect<i32>, state: ViewState);
+    fn draw_list_back(&mut self, rect: Rect<i32>, state: ViewState);
+    fn draw_list_body(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_panel_back(&mut self, rect: Rect<i32>, state: ViewState);
     fn draw_panel_body(&mut self, rect: Rect<i32>, state: ViewState);
-    fn draw_text(&mut self, x: f32, y: f32, text: &Rc<FormattedTextBlock>);
+    fn draw_text(&mut self, x: f32, y: f32, color: u32, text: &Rc<FormattedTextBlock>);
+    fn draw_rect(&mut self, rect: Rect<i32>, color: u32);
 }
 
 #[allow(unused)]
@@ -81,6 +87,7 @@ pub struct ViewState {
     pub checked: bool
 }
 
+#[allow(unused)]
 impl ViewState {
     pub fn no_focus() -> Self {
         ViewState {

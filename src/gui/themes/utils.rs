@@ -1,6 +1,7 @@
 use speedy2d::color::Color;
 use speedy2d::Graphics2D;
 
+#[allow(unused)]
 pub fn draw_rounded_rectangle(graphics: &mut Graphics2D, x1: f32, y1: f32, x2: f32, y2: f32, radius: f32, scale: f32, color: Color) {
     let xmin = x1.min(x2);
     let xmax = x1.max(x2);
@@ -22,6 +23,7 @@ pub fn draw_rounded_rectangle(graphics: &mut Graphics2D, x1: f32, y1: f32, x2: f
     draw_quarter_circle(graphics, xmin + 0.5 + radius, ymax - 0.5 - radius, radius, 3, scale, color);
 }
 
+#[allow(unused)]
 fn draw_quarter_circle(graphics: &mut Graphics2D, x: f32, y: f32, radius: f32, quadrant: i32, scale: f32, color: Color) {
     let mut xx = radius;
     let mut yy = 0f32;
@@ -60,6 +62,7 @@ fn draw_quarter_circle(graphics: &mut Graphics2D, x: f32, y: f32, radius: f32, q
     }
 }
 
+#[allow(unused)]
 pub fn draw_dashed_rectangle(graphics: &mut Graphics2D, x1: f32, y1: f32, x2: f32, y2: f32, dash_len: f32, scale: f32, color: Color) {
     let mut x = x1;
     let mut y = y1;

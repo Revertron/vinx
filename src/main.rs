@@ -6,6 +6,8 @@ extern crate quick_xml;
 extern crate speedy2d;
 extern crate rand;
 
+use std::cell::RefCell;
+use std::rc::Rc;
 use speedy2d::dimen::Vector2;
 use speedy2d::Window;
 use speedy2d::window::{WindowCreationOptions, WindowPosition, WindowSize};
@@ -13,7 +15,9 @@ use speedy2d::window::{WindowCreationOptions, WindowPosition, WindowSize};
 use gui::*;
 use gui::events::EventType;
 use gui::themes::Theme;
+use gui::traits::Element;
 use gui::ui::UI;
+use gui::views::{Dimension, Label, List};
 use gui::win::{Win, WinEvent};
 use themes::Classic;
 use traits::View;
@@ -29,11 +33,17 @@ const TITLE: &'static str = "VinX";
 
 fn main() {
     let layout = include_str!("../layout.xml");
-    let ui = UI::from_xml(layout, WIDTH, HEIGHT, Classic::typeface()).unwrap();
+    let mut ui = UI::from_xml(layout, WIDTH, HEIGHT, Classic::typeface()).unwrap();
 
     if let Some(button) = ui.get_view("btn1") {
         button.borrow_mut().on_event(EventType::Click, Box::new(button1_click));
     }
+
+    if let Some(button) = ui.get_view("btn2") {
+        button.borrow_mut().on_event(EventType::Click, Box::new(button2_click));
+    }
+
+    ui.on_start(Box::new(on_start));
 
     let window_size = WindowSize::PhysicalPixels(Vector2::new(WIDTH, HEIGHT));
     let options = WindowCreationOptions::new_windowed(window_size, Some(WindowPosition::Center));
@@ -62,4 +72,31 @@ fn button1_click(ui: &mut UI, view: &dyn View) -> bool {
         button.set_text("Clicked!");
     }
     true
+}
+
+fn button2_click(ui: &mut UI, _view: &dyn View) -> bool {
+    let mut buf = Vec::new();
+    for i in 1..=20 {
+        buf.push(format!("New item {}", i));
+    }
+    // Set items for list
+    if let Some(list) = ui.get_view("list1") {
+        if let Some(list) = list.borrow_mut().downcast_mut::<List>() {
+            list.set_items(buf);
+        }
+    }
+    true
+}
+
+fn on_start(ui: &mut UI) {
+    let mut buf = Vec::new();
+    for i in 1..=20 {
+        buf.push(format!("Start item {}", i));
+    }
+    // Set items for list
+    if let Some(list) = ui.get_view("list1") {
+        if let Some(list) = list.borrow_mut().downcast_mut::<List>() {
+            list.set_items(buf);
+        }
+    }
 }

@@ -38,7 +38,9 @@ pub trait View: Downcast {
     fn get_rect(&self) -> Rect<i32>;
     fn set_rect(&mut self, rect: Rect<i32>);
     fn get_padding(&self, scale: f64) -> Borders { Borders::default().scaled(scale) }
+    fn set_padding(&self, top: i32, left: i32, right: i32, bottom: i32);
     fn get_margin(&self, scale: f64) -> Borders { Borders::default().scaled(scale) }
+    fn set_margin(&self, top: i32, left: i32, right: i32, bottom: i32);
     fn get_x(&self) -> i32 { self.get_rect().min.x }
     fn get_y(&self) -> i32 { self.get_rect().min.y }
     fn get_rect_width(&self) -> i32 { self.get_rect().width() }
@@ -50,6 +52,7 @@ pub trait View: Downcast {
     fn is_break(&self) -> bool { false }
     #[allow(unused_variables)]
     fn set_focused(&self, focused: bool) {}
+    fn set_focusable(&self, focusable: bool);
     fn calculate_full_size(&self, scale: f64) -> (i32, i32) {
         let (width, height) = self.get_content_size();
         let padding = self.get_padding(scale);
@@ -94,6 +97,7 @@ pub trait View: Downcast {
     // Events and listeners
     fn on_event(&mut self, event: EventType, func: Box<dyn FnMut(&mut UI, &dyn View) -> bool>);
     fn click(&self, ui: &mut UI) -> bool;
+    fn update(&mut self, ui: &mut UI) -> bool { false }
 
     #[allow(unused_variables)]
     fn on_mouse_move(&self, ui: &mut UI, position: Vector2<i32>) -> bool { false }

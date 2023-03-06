@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 use themes::ViewState;
 
-pub enum Background {
+#[allow(unused)]
+pub enum DrawState {
     Transparent,
     Color(u32),
     Image(String),
     Gradient(u32, u32, u32, u32)
 }
 
+#[allow(unused)]
 pub enum Font {
     Color(u32)
 }
@@ -17,6 +19,7 @@ pub struct Selector<T> {
     states: HashMap<ViewState, T>
 }
 
+#[allow(unused)]
 impl<T> Selector<T> {
     pub fn new() -> Self {
         Selector { states: HashMap::new() }
@@ -31,5 +34,5 @@ impl<T> Selector<T> {
     }
 }
 
-pub type BackSelector = Selector<Background>;
+pub type MainSelector = Selector<DrawState>;
 pub type FontSelector = Selector<Font>;

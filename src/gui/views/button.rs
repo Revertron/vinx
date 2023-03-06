@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::cmp::max;
 use std::collections::HashMap;
@@ -9,8 +8,9 @@ use speedy2d::window::MouseButton;
 
 use assets::get_font;
 use events::EventType;
+use gui::common::DEFAULT_TEXT_SIZE;
 use gui::themes::{FontStyle, Theme, Typeface, ViewState};
-use gui::traits::{Container, Element, View, WeakElement};
+use gui::traits::{Element, View, WeakElement};
 use gui::types::{Point, Rect, rect};
 use gui::ui::UI;
 use gui::views::{Borders, Dimension};
@@ -35,7 +35,7 @@ impl Button {
                 line_height: 0f32,
                 single_line: true,
                 cached_text: None,
-                foreground: FontSelector::new(),
+                font: FontSelector::new(),
                 listeners: HashMap::new()
             })
         }
@@ -167,7 +167,7 @@ impl View for Button {
         rect
     }
 
-    fn fits_in_rect(&self, width: i32, height: i32, scale: f64) -> bool {
+    fn fits_in_rect(&self, width: i32, height: i32, _scale: f64) -> bool {
         let state = self.state.borrow();
         match &state.cached_text {
             Some(text) => text.width() <= width as f32 && text.height() <= height as f32,
@@ -187,7 +187,8 @@ impl View for Button {
         if let Some(text) = &state.cached_text {
             let x = (self.get_rect_width() as f32 - text.width()) / 2f32;
             let y = (self.get_rect_height() as f32 - text.height()) / 2f32;
-            theme.draw_text((rect.min.x as f32 + x).round(), (rect.min.y as f32 + y).round(), text);
+            let color = theme.get_text_color(state.main.state, &state.main.foreground);
+            theme.draw_text((rect.min.x as f32 + x).round(), (rect.min.y as f32 + y).round(), color, text);
         }
         theme.pop_clip();
     }
@@ -208,8 +209,24 @@ impl View for Button {
         self.state.borrow().main.padding.scaled(scale)
     }
 
+    fn set_padding(&self, top: i32, left: i32, right: i32, bottom: i32) {
+        let mut state = self.state.borrow_mut();
+        state.main.padding.top = top;
+        state.main.padding.left = left;
+        state.main.padding.right = right;
+        state.main.padding.bottom = bottom;
+    }
+
     fn get_margin(&self, scale: f64) -> Borders {
         self.state.borrow().main.margin.scaled(scale)
+    }
+
+    fn set_margin(&self, top: i32, left: i32, right: i32, bottom: i32) {
+        let mut state = self.state.borrow_mut();
+        state.main.margin.top = top;
+        state.main.margin.left = left;
+        state.main.margin.right = right;
+        state.main.margin.bottom = bottom;
     }
 
     fn get_bounds(&self) -> (Dimension, Dimension) {
@@ -239,6 +256,10 @@ impl View for Button {
 
     fn set_focused(&self, focused: bool) {
         self.state.borrow_mut().main.state.focused = focused;
+    }
+
+    fn set_focusable(&self, focusable: bool) {
+        self.state.borrow_mut().main.state.focusable = focusable;
     }
 
     fn set_width(&mut self, width: Dimension) {
@@ -313,6 +334,6 @@ impl View for Button {
 impl Default for Button {
     fn default() -> Self {
         let rect = rect((0, 0), (60, 24));
-        Button::new(rect, "", 24_f32)
+        Button::new(rect, "", DEFAULT_TEXT_SIZE)
     }
 }

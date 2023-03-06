@@ -2,6 +2,8 @@ pub mod label;
 pub mod button;
 pub mod edit;
 pub mod checkbox;
+pub mod list;
+pub mod listview;
 
 use gui::themes::{Typeface, ViewState};
 use gui::traits::{View, WeakElement};
@@ -13,11 +15,12 @@ use std::str::FromStr;
 use gui::common::random_string;
 use gui::events::EventType;
 use gui::ui::UI;
-use styles::selector::{BackSelector, FontSelector};
+use styles::selector::{MainSelector, FontSelector};
 pub use self::label::Label;
 pub use self::button::Button;
 pub use self::edit::Edit;
 pub use self::checkbox::CheckBox;
+pub use self::list::List;
 
 pub const BUTTON_MIN_WIDTH: i32 = 80;
 pub const BUTTON_MIN_HEIGHT: i32 = 24;
@@ -33,7 +36,8 @@ pub struct FieldsMain {
     pub id: String,
     pub state: ViewState,
     pub break_line: bool,
-    pub background: BackSelector,
+    pub background: MainSelector,
+    pub foreground: MainSelector,
     pub parent: Option<WeakElement>,
     pub typeface: Option<Typeface>
 }
@@ -52,7 +56,8 @@ impl FieldsMain {
             id: random_string(16),
             state: ViewState::default(),
             break_line: false,
-            background: BackSelector::new(),
+            background: MainSelector::new(),
+            foreground: MainSelector::new(),
             parent: None,
             typeface: None
         }
@@ -67,7 +72,7 @@ pub struct FieldsTexted {
     pub line_height: f32,
     pub single_line: bool,
     pub cached_text: Option<Rc<FormattedTextBlock>>,
-    pub foreground: FontSelector,
+    pub font: FontSelector,
     pub listeners: HashMap<EventType, Box<dyn FnMut(&mut UI, &dyn View) -> bool>>
 }
 
@@ -80,6 +85,7 @@ pub struct Borders {
     pub bottom: i32
 }
 
+#[allow(unused)]
 impl Borders {
     pub fn new(top: i32, left: i32, right: i32, bottom: i32) -> Self {
         Self { top, left, right, bottom }

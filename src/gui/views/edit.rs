@@ -1,9 +1,9 @@
 use std::cell::RefCell;
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::collections::HashMap;
 use std::time::Instant;
 use speedy2d::dimen::Vector2;
-use speedy2d::font::{TextAlignment, TextLayout, TextOptions};
+use speedy2d::font::{TextLayout, TextOptions};
 use speedy2d::window::{KeyScancode, ModifiersState, MouseButton, VirtualKeyCode};
 
 use assets::get_font;
@@ -13,7 +13,7 @@ use gui::common::{delete_char, insert_char};
 use gui::views::Borders;
 use styles::selector::FontSelector;
 use themes::{FontStyle, Theme, Typeface, ViewState};
-use traits::{Container, Element, View, WeakElement};
+use traits::{Element, View, WeakElement};
 use types::{Point, Rect, rect};
 use ui::UI;
 use views::{BUTTON_MIN_HEIGHT, BUTTON_MIN_WIDTH, Dimension, FieldsMain, FieldsTexted};
@@ -23,7 +23,8 @@ pub struct Edit {
     scroll_x: RefCell<i32>,
     caret_pos: RefCell<usize>,
     caret_rect: RefCell<Rect<i32>>,
-    caret_time: RefCell<Instant>
+    caret_time: RefCell<Instant>,
+    caret_visible: RefCell<bool>
 }
 
 #[allow(dead_code)]
@@ -36,7 +37,7 @@ impl Edit {
             line_height: 0f32,
             single_line: true,
             cached_text: None,
-            foreground: FontSelector::new(),
+            font: FontSelector::new(),
             listeners: HashMap::new()
         };
         fields.main.padding = Borders::with_padding(4);
@@ -45,7 +46,8 @@ impl Edit {
             scroll_x: RefCell::new(0),
             caret_pos: RefCell::new(0),
             caret_rect: RefCell::new(gui::types::rect((0, 0), (0, 0))),
-            caret_time: RefCell::new(Instant::now())
+            caret_time: RefCell::new(Instant::now()),
+            caret_visible: RefCell::new(false)
         }
     }
 
@@ -149,10 +151,11 @@ impl Edit {
         }
         *self.caret_rect.borrow_mut() = rect;
         *self.caret_time.borrow_mut() = Instant::now();
+        *self.caret_visible.borrow_mut() = true;
     }
 
     fn get_caret_rect(&self, scale: f64) -> Rect<i32> {
-        let mut rect = self.caret_rect.borrow().clone();
+        let rect = self.caret_rect.borrow().clone();
         if rect.width() != 0 && rect.height() != 0 {
             return rect;
         }
@@ -247,9 +250,9 @@ impl View for Edit {
         let (new_width, new_height) = self.calculate_size(width, height, scale);
         let (w, h) = self.calculate_full_size(scale);
         let (width, height) = {
-            let mut state = self.state.borrow_mut();
-            let mut ww = w;
-            let mut hh = h;
+            let state = self.state.borrow_mut();
+            let ww;
+            let hh;
             match &state.main.width {
                 Dimension::Min => ww = w,
                 Dimension::Max => ww = new_width,
@@ -269,7 +272,7 @@ impl View for Edit {
         rect
     }
 
-    fn fits_in_rect(&self, width: i32, height: i32, scale: f64) -> bool {
+    fn fits_in_rect(&self, width: i32, height: i32, _scale: f64) -> bool {
         let state = self.state.borrow();
         match &state.cached_text {
             Some(text) => text.width() <= width as f32 && text.height() <= height as f32,
@@ -297,17 +300,15 @@ impl View for Edit {
         theme.clip_rect(rect);
         if let Some(text) = &state.cached_text {
             let y = (rect.height() as f32 - text.height()) / 2f32;
-            theme.draw_text((rect.min.x as f32 + scroll_x as f32).round(), (rect.min.y as f32 + y).round(), text);
+            let color = theme.get_text_color(state.main.state, &state.main.foreground);
+            theme.draw_text((rect.min.x as f32 + scroll_x as f32).round(), (rect.min.y as f32 + y).round(), color, text);
         }
         theme.pop_clip();
-        if state.main.state.focused {
-            let elapsed = self.caret_time.borrow().elapsed().as_millis();
-            if elapsed < 500 || elapsed % 1000 < 500 {
-                let mut caret_rect = self.get_caret_rect(state.main.scale);
-                caret_rect.move_by(origin);
-                caret_rect.move_by((scroll_x, 0));
-                theme.draw_edit_caret(caret_rect, state.main.state);
-            }
+        if state.main.state.focused && *self.caret_visible.borrow() {
+            let mut caret_rect = self.get_caret_rect(state.main.scale);
+            caret_rect.move_by(origin);
+            caret_rect.move_by((scroll_x, 0));
+            theme.draw_edit_caret(caret_rect, state.main.state);
         }
     }
 
@@ -327,8 +328,24 @@ impl View for Edit {
         self.state.borrow().main.padding.scaled(scale)
     }
 
+    fn set_padding(&self, top: i32, left: i32, right: i32, bottom: i32) {
+        let mut state = self.state.borrow_mut();
+        state.main.padding.top = top;
+        state.main.padding.left = left;
+        state.main.padding.right = right;
+        state.main.padding.bottom = bottom;
+    }
+
     fn get_margin(&self, scale: f64) -> Borders {
         self.state.borrow().main.margin.scaled(scale)
+    }
+
+    fn set_margin(&self, top: i32, left: i32, right: i32, bottom: i32) {
+        let mut state = self.state.borrow_mut();
+        state.main.margin.top = top;
+        state.main.margin.left = left;
+        state.main.margin.right = right;
+        state.main.margin.bottom = bottom;
     }
 
     fn get_bounds(&self) -> (Dimension, Dimension) {
@@ -363,6 +380,10 @@ impl View for Edit {
         self.state.borrow_mut().main.state.focused = focused;
     }
 
+    fn set_focusable(&self, focusable: bool) {
+        self.state.borrow_mut().main.state.focusable = focusable;
+    }
+
     fn set_width(&mut self, width: Dimension) {
         self.state.borrow_mut().main.width = width;
     }
@@ -388,6 +409,19 @@ impl View for Edit {
             let result = click(ui, self as &dyn View);
             self.state.borrow_mut().listeners.insert(EventType::Click, click);
             return result;
+        }
+        false
+    }
+
+    fn update(&mut self, _ui: &mut UI) -> bool {
+        if self.state.borrow().main.state.focused {
+            let elapsed = self.caret_time.borrow().elapsed().as_millis();
+            if elapsed >= 500 {
+                let visible = *self.caret_visible.borrow();
+                *self.caret_visible.borrow_mut() = !visible;
+                *self.caret_time.borrow_mut() = Instant::now();
+                return true;
+            }
         }
         false
     }

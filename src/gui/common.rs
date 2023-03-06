@@ -1,8 +1,9 @@
 use rand::Rng;
-use speedy2d::color::Color;
-use speedy2d::Graphics2D;
+
+pub const DEFAULT_TEXT_SIZE: f32 = 24_f32;
 
 /// Gets current UNIX timestamp in UTC
+#[allow(unused)]
 pub fn get_utc_time() -> u128 {
     let sys_time = std::time::SystemTime::now();
     let elapsed = sys_time.duration_since(std::time::UNIX_EPOCH).unwrap();

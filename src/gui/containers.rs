@@ -8,7 +8,6 @@ use gui::views::Borders;
 
 use themes::{FontStyle, Theme, Typeface, ViewState};
 use traits::{Container, Element, View, WeakElement};
-use types;
 use types::{Point, Rect, rect};
 use ui::UI;
 use views::{Dimension, Direction, FieldsMain};
@@ -112,7 +111,10 @@ impl Container for Frame {
 
         for v in self.views.iter() {
             if let Some(found) = v.borrow().as_container() {
-                return found.get_view(id);
+                let view = found.get_view(id);
+                if view.is_some() {
+                    return view;
+                }
             }
         }
         None
@@ -215,9 +217,9 @@ impl View for Frame {
 
         let (w, h) = self.calculate_full_size(scale);
         let (width, height) = {
-            let mut state = self.state.borrow_mut();
-            let mut ww = w;
-            let mut hh = h;
+            let state = self.state.borrow_mut();
+            let ww;
+            let hh;
             match &state.width {
                 Dimension::Min => ww = w,
                 Dimension::Max => ww = new_width,
@@ -274,8 +276,24 @@ impl View for Frame {
         self.state.borrow().padding.scaled(scale)
     }
 
+    fn set_padding(&self, top: i32, left: i32, right: i32, bottom: i32) {
+        let mut state = self.state.borrow_mut();
+        state.padding.top = top;
+        state.padding.left = left;
+        state.padding.right = right;
+        state.padding.bottom = bottom;
+    }
+
     fn get_margin(&self, scale: f64) -> Borders {
         self.state.borrow().margin.scaled(scale)
+    }
+
+    fn set_margin(&self, top: i32, left: i32, right: i32, bottom: i32) {
+        let mut state = self.state.borrow_mut();
+        state.margin.top = top;
+        state.margin.left = left;
+        state.margin.right = right;
+        state.margin.bottom = bottom;
     }
 
     fn get_bounds(&self) -> (Dimension, Dimension) {
@@ -287,7 +305,7 @@ impl View for Frame {
         let scale = self.state.borrow().scale;
         let mut rect = rect((-1, -1), (0, 0));
         for v in self.views.iter() {
-            let mut v = v.borrow();
+            let v = v.borrow();
             // Get maximum occupied area
             let view_rect = v.get_rect();
             let margins = v.get_margin(scale);
@@ -335,6 +353,10 @@ impl View for Frame {
         }
     }
 
+    fn set_focusable(&self, focusable: bool) {
+        self.state.borrow_mut().state.focusable = focusable;
+    }
+
     fn set_width(&mut self, width: Dimension) {
         self.state.borrow_mut().width = width;
     }
@@ -368,6 +390,15 @@ impl View for Frame {
         false
     }
 
+    fn update(&mut self, ui: &mut UI) -> bool {
+        for v in self.views.iter() {
+            if v.borrow_mut().update(ui) {
+                return true;
+            }
+        }
+        false
+    }
+
     fn on_mouse_move(&self, ui: &mut UI, position: Vector2<i32>) -> bool {
         let position = (position.x - self.state.borrow().rect.min.x, position.y - self.state.borrow().rect.min.y);
         let mut processed = false;
@@ -380,7 +411,7 @@ impl View for Frame {
     fn on_mouse_button_down(&self, ui: &mut UI, position: Vector2<i32>, button: MouseButton) -> bool {
         println!("Mouse down in {}", &self.state.borrow().id);
         let position = (position.x - self.state.borrow().rect.min.x, position.y - self.state.borrow().rect.min.y);
-        let mut focused = false;
+        let focused;
         for v in self.views.iter().rev() {
             let f = v.borrow().is_focused();
             if v.borrow().on_mouse_button_down(ui, Vector2::from(position), button) {

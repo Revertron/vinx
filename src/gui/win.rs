@@ -44,14 +44,17 @@ impl<T> WindowHandler<T> for Win<T> {
         std::thread::spawn(move || {
             loop {
                 // Send a message every 16ms
-                user_event_sender.send_event(WinEvent::Repaint).unwrap();
-                std::thread::sleep(Duration::from_millis(16));
+                user_event_sender.send_event(WinEvent::Update).unwrap();
+                std::thread::sleep(Duration::from_millis(15));
             }
         });
+        self.ui.start();
     }
 
-    fn on_user_event(&mut self, helper: &mut WindowHelper<T>, event: T) {
-        helper.request_redraw();
+    fn on_user_event(&mut self, helper: &mut WindowHelper<T>, _event: T) {
+        if self.ui.update() {
+            helper.request_redraw();
+        }
     }
 
     fn on_resize(&mut self, helper: &mut WindowHelper<T>, size_pixels: Vector2<u32>) {
@@ -122,12 +125,12 @@ impl<T> WindowHandler<T> for Win<T> {
         }
     }
 
-    fn on_keyboard_modifiers_changed(&mut self, helper: &mut WindowHelper<T>, state: ModifiersState) {
+    fn on_keyboard_modifiers_changed(&mut self, _helper: &mut WindowHelper<T>, state: ModifiersState) {
         println!("Modifiers: {:?}", &state);
     }
 }
 
 #[derive(Copy, Clone)]
 pub enum WinEvent {
-    Repaint
+    Update
 }

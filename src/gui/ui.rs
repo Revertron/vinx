@@ -13,26 +13,27 @@ use gui::themes::Theme;
 use gui::traits::{Element, View};
 use gui::types::Point;
 use themes::Typeface;
-use types::{Rect, rect};
 
-use views::{Button, Edit, Label, CheckBox};
+use views::{Button, Edit, Label, CheckBox, List};
 
 pub struct UI {
     width: u32,
     height: u32,
     typeface: Typeface,
     root: Option<Element>,
-    types: HashMap<String, fn() -> Element>
+    types: HashMap<String, fn() -> Element>,
+    on_start: Option<Box<dyn FnMut(&mut UI)>>
 }
 
 #[allow(dead_code)]
 impl UI {
     pub fn new(width: u32, height: u32, typeface: Typeface) -> Self {
-        let mut ui = UI { width, height, typeface, root: None, types: HashMap::new() };
+        let mut ui = UI { width, height, typeface, root: None, types: HashMap::new(), on_start: None };
         ui.register::<Label>("Label");
         ui.register::<Button>("Button");
         ui.register::<CheckBox>("CheckBox");
         ui.register::<Edit>("Edit");
+        ui.register::<List>("List");
         ui.register::<Frame>("Frame");
         ui
     }
@@ -73,14 +74,31 @@ impl UI {
         self.types.get(name).expect("No type!")()
     }
 
+    pub fn on_start(&mut self, func: Box<dyn FnMut(&mut UI)>) {
+        self.on_start = Some(func);
+    }
+
     pub fn layout(&mut self, width: u32, height: u32, scale: f64) {
         self.width = width;
         self.height = height;
-        let rect = rect((0, 0), (width as i32, height as i32));
         let root = self.root.clone();
         if let Some(root) = root {
             root.borrow_mut().layout_content(0, 0, width as i32, height as i32, &self.typeface.clone(), scale);
         }
+    }
+
+    pub fn start(&mut self) {
+        if let Some(mut start) = self.on_start.take() {
+            start(self);
+        }
+    }
+
+    pub fn update(&mut self) -> bool {
+        let root = self.root.clone();
+        if let Some(root) = root {
+            return root.borrow_mut().update(self);
+        }
+        false
     }
 
     pub fn paint(&self, theme: &mut dyn Theme) {
