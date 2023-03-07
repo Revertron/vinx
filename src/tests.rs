@@ -7,10 +7,10 @@ mod tests {
 
     #[test]
     fn test() {
-        let layout = include_str!("../layout.xml");
+        let layout = include_str!("layout.xml");
         let mut ui = UI::from_xml(layout, 1920, 1080, Classic::default()).unwrap();
         let scale = 2.0;
-        let mut theme = Classic::new(graphics, scale, , );
+        let mut theme = Classic::new(graphics, 1920, 1080, scale);
         ui.paint(&mut theme);
 
         if let Some(button) = ui.get_view("btn1") {

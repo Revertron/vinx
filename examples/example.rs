@@ -7,12 +7,10 @@ use speedy2d::dimen::Vector2;
 use speedy2d::Window;
 use speedy2d::window::{WindowCreationOptions, WindowPosition, WindowSize};
 
-use vinx::gui::*;
 use vinx::gui::events::EventType;
 use vinx::gui::themes::Theme;
-use vinx::gui::traits::Element;
 use vinx::gui::ui::UI;
-use vinx::gui::views::{Dimension, Label, List};
+use vinx::gui::views::List;
 use vinx::gui::win::{Win, WinEvent};
 use vinx::gui::themes::Classic;
 use vinx::gui::traits::View;
@@ -23,7 +21,7 @@ const HEIGHT: u32 = 1080;
 const TITLE: &'static str = "VinX";
 
 fn main() {
-    let layout = include_str!("../layout.xml");
+    let layout = include_str!("layout.xml");
     let mut ui = UI::from_xml(layout, WIDTH, HEIGHT, Classic::typeface()).unwrap();
 
     if let Some(button) = ui.get_view("btn1") {
