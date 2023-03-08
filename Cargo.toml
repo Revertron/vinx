@@ -7,8 +7,10 @@ authors = ["Revertron <vinx@revertron.com>"]
 quick-xml = "0.27.1"
 downcast-rs = "1.2.0"
 speedy2d = "1.10.0"
-include_dir = "0.7"
 rand = "0.8.5"
+
+[dev-dependencies]
+include_dir = "0.7"
 
 [profile.release]
 opt-level = 3

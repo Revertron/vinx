@@ -2,11 +2,14 @@
 
 extern crate speedy2d;
 extern crate vinx;
+extern crate include_dir;
 
+use include_dir::{Dir, include_dir};
 use speedy2d::dimen::Vector2;
 use speedy2d::Window;
 use speedy2d::window::{WindowCreationOptions, WindowPosition, WindowSize};
 
+use vinx::gui::assets::{AssetsProvider, set_provider};
 use vinx::gui::events::EventType;
 use vinx::gui::themes::Theme;
 use vinx::gui::ui::UI;
@@ -20,7 +23,32 @@ const WIDTH: u32 = 1920;
 const HEIGHT: u32 = 1080;
 const TITLE: &'static str = "VinX";
 
+// Usually you will not use the `examples` part
+const ASSETS: Dir = include_dir!("$CARGO_MANIFEST_DIR/examples/assets");
+
+struct Provider {
+    dir: Dir<'static>
+}
+
+impl Provider {
+    pub fn new(dir: Dir<'static>) -> Self {
+        Self { dir }
+    }
+}
+
+impl AssetsProvider for Provider {
+    fn get_file(&self, path: &str) -> Option<&[u8]> {
+        if let Some(file) = self.dir.get_file(path) {
+            return Some(file.contents());
+        }
+        None
+    }
+}
+
 fn main() {
+    let assets = Provider::new(ASSETS);
+    set_provider(Box::new(assets));
+
     let layout = include_str!("layout.xml");
     let mut ui = UI::from_xml(layout, WIDTH, HEIGHT, Classic::typeface()).unwrap();
 
